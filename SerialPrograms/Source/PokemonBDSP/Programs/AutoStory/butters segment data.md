@@ -1,3 +1,6 @@
+these are the counts and direction inputs from my segement beginning in the player's room to the entrance of the 3rd gym (fighting gym)
+
+
 U2
 R6
 U1
