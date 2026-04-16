@@ -38,6 +38,7 @@
 //#include "Programs/Glitches/PokemonBDSP_CloneItemsBoxCopy.h"
 //#include "Programs/Glitches/PokemonBDSP_CloneItemsMenuOverlap.h"
 
+#include "Programs/AutoStory/PokemonBDSP_AutoStory.h"
 #include "Programs/TestPrograms/PokemonBDSP_ShinyEncounterTester.h"
 #include "Programs/TestPrograms/PokemonBDSP_SoundListener.h"
 
@@ -56,6 +57,9 @@ std::vector<PanelEntry> PanelListFactory::make_panels() const{
 
     ret.emplace_back("---- Settings ----");
     ret.emplace_back(make_settings<GameSettings_Descriptor, GameSettingsPanel>());
+
+    ret.emplace_back("---- Auto Story ----");
+    ret.emplace_back(make_single_switch_program<AutoStory_Descriptor, AutoStory>());
 
     ret.emplace_back("---- General ----");
     ret.emplace_back(make_single_switch_program<MassRelease_Descriptor, MassRelease>());
