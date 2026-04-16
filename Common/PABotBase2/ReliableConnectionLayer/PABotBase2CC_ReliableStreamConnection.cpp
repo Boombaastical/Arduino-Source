@@ -72,12 +72,19 @@ size_t ReliableStreamConnection::pending() const{
     std::unique_lock<Mutex> lg(m_lock);
     return m_reliable_sender.slots_used();
 }
-void ReliableStreamConnection::wait_for_pending(){
+bool ReliableStreamConnection::wait_for_pending(WallDuration timeout){
     std::unique_lock<Mutex> lg(m_lock);
-    m_cv.wait(lg, [this]{
-        return this->cancelled() || m_reliable_sender.slots_used() == 0;
-    });
+    if (timeout == WallDuration::max()){
+        m_cv.wait(lg, [this]{
+            return this->cancelled() || m_reliable_sender.slots_used() == 0;
+        });
+    }else{
+        m_cv.wait_for(lg, timeout, [this]{
+            return this->cancelled() || m_reliable_sender.slots_used() == 0;
+        });
+    }
     throw_if_cancelled();
+    return m_reliable_sender.slots_used() == 0;
 }
 
 
@@ -86,18 +93,24 @@ void ReliableStreamConnection::wait_for_pending(){
 //  StreamSender/StreamListener
 //
 
-void ReliableStreamConnection::reliable_send(const void* data, size_t bytes){
+size_t ReliableStreamConnection::reliable_send_blocking(const void* data, size_t bytes, WallDuration timeout){
+    WallClock deadline = timeout == WallDuration::max()
+        ? WallClock::max()
+        : current_time() + timeout;
+
     const char* ptr = (const char*)data;
     std::unique_lock<Mutex> lg(m_lock);
-    while (bytes > 0){
+    while (current_time() < deadline){
         throw_if_cancelled();
         if (m_reliable_sender.slots_used() >= m_remote_slot_capacity){
-            m_cv.wait(lg);
+            m_cv.wait_until(lg, deadline);
         }
-        size_t sent = m_reliable_sender.send_stream(ptr, bytes);
-        ptr += sent;
-        bytes -= sent;
+        if (m_reliable_sender.send_stream_all_or_nothing(ptr, bytes)){
+            return bytes;
+        }
+        m_cv.wait_until(lg, deadline);
     }
+    return 0;
 }
 void ReliableStreamConnection::on_recv(const void* data, size_t bytes){
 #if 0
@@ -115,7 +128,7 @@ void ReliableStreamConnection::on_recv(const void* data, size_t bytes){
 //  PABotBase2::StreamConnection
 //
 
-size_t ReliableStreamConnection::unreliable_send(const void* data, size_t bytes){
+size_t ReliableStreamConnection::unreliable_send(const void* data, size_t bytes) noexcept{
     const PacketHeader* header = (const PacketHeader*)data;
     uint8_t opcode = header->opcode & PABB2_CONNECTION_OPCODE_MASK;
     bool retransmit = header->opcode & PABB2_CONNECTION_RETRANSMIT_FLAG;
@@ -124,18 +137,20 @@ size_t ReliableStreamConnection::unreliable_send(const void* data, size_t bytes)
         opcode != PABB2_CONNECTION_OPCODE_ASK_STREAM_DATA &&
         opcode != PABB2_CONNECTION_OPCODE_RET_STREAM_DATA;
 
-    if (retransmit){
-        m_logger.log(
-            "[RSC]: Re-send: (0x" + tostr_hex(header->opcode) + ") " + tostr(header),
-            COLOR_ORANGE
-        );
-    }else if (m_log_everything || always_log){
-        m_logger.log(
-            "[RSC]: Sending: (0x" + tostr_hex(header->opcode) + ") " + tostr(header),
-            COLOR_DARKGREEN
-        );
-//        PABotBase2::PacketHeader_print(header, true);
-    }
+    try{
+        if (retransmit){
+            m_logger.log(
+                "[RSC]: Re-send: (0x" + tostr_hex(header->opcode) + ") " + tostr(header),
+                COLOR_ORANGE
+            );
+        }else if (m_log_everything || always_log){
+            m_logger.log(
+                "[RSC]: Sending: (0x" + tostr_hex(header->opcode) + ") " + tostr(header),
+                COLOR_DARKGREEN
+            );
+//            PABotBase2::PacketHeader_print(header, true);
+        }
+    }catch (...){}
 //    cout << "ReliableStreamConnection::unreliable_send() - before send" << endl;
     return m_unreliable_connection.unreliable_send(data, bytes);
 }
@@ -146,7 +161,7 @@ size_t ReliableStreamConnection::unreliable_send(const void* data, size_t bytes)
 //  Send Path
 //
 
-void ReliableStreamConnection::reset(){
+bool ReliableStreamConnection::reset(WallDuration timeout){
     {
         std::lock_guard<Mutex> lg(m_lock);
         m_reliable_sender.reset();
@@ -156,7 +171,7 @@ void ReliableStreamConnection::reset(){
         m_reliable_sender.send_packet(PABB2_CONNECTION_OPCODE_ASK_RESET, 0, nullptr);
     }
     m_cv.notify_all();
-    wait_for_pending();
+    return wait_for_pending(timeout);
 }
 
 bool ReliableStreamConnection::try_send_request(uint8_t opcode){
@@ -348,6 +363,7 @@ void ReliableStreamConnection::on_packet(const PacketHeader* packet){
     case PABB2_CONNECTION_OPCODE_INFO_H32:
     case PABB2_CONNECTION_OPCODE_INFO_U32:
     case PABB2_CONNECTION_OPCODE_INFO_I32:
+    case PABB2_CONNECTION_OPCODE_INFO_BINARY:
     case PABB2_CONNECTION_OPCODE_INFO_STR:
     case PABB2_CONNECTION_OPCODE_INFO_LABEL_H32:
     case PABB2_CONNECTION_OPCODE_INFO_LABEL_U32:
@@ -359,7 +375,7 @@ void ReliableStreamConnection::on_packet(const PacketHeader* packet){
         return;
     default:
         m_logger.log(
-            "[RSC]: UNKNOWN OPCODE: Device send an unknown opcode: " + std::to_string(packet->opcode),
+            "[RSC]: UNKNOWN OPCODE: Device sent an unknown opcode: 0x" + tostr_hex(packet->opcode),
             COLOR_RED
         );
         return;
