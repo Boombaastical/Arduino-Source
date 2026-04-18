@@ -1,19 +1,14 @@
-/*  BDSP AutoStory
- *
- *  From: https://github.com/PokemonAutomation/
- *
- */
+#pragma once
 
-#ifndef PokemonAutomation_PokemonBDSP_AutoStory_H
-#define PokemonAutomation_PokemonBDSP_AutoStory_H
+#include "Common/Cpp/Options/BooleanCheckBoxOption.h"
 
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
-#include "Options/PokemonBDSP_AutoStory_Options.h"
+
+#include "BDSP_RouteConfig.h"
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{
 namespace PokemonBDSP{
-
 
 class BDSPAutoStory_Descriptor : public SingleSwitchProgramDescriptor{
 public:
@@ -25,6 +20,7 @@ public:
 
 class BDSPAutoStory : public SingleSwitchProgramInstance{
 public:
+
     BDSPAutoStory();
 
     virtual void program(
@@ -33,11 +29,19 @@ public:
         ) override;
 
 private:
-    BDSPAutoStoryInternal::RouteOptions ROUTE_OPTIONS;
+
+    EnumDropdownOption<BDSPRouteType> ROUTE_TYPE;
+
+    BooleanCheckBoxOption STARTER_ENABLED;
+
+    EnumDropdownOption<BDSPStarter> STARTER_SELECT;
+
+    BooleanCheckBoxOption STARTER_SHINY;
+
+    BooleanCheckBoxOption CATCH_LEGENDARY;
+
 };
 
-
 }
 }
 }
-#endif

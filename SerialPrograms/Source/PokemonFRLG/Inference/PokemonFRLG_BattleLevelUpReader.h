@@ -12,7 +12,6 @@
 #include "Common/Cpp/Color.h"
 #include "CommonFramework/ImageTools/ImageBoxes.h"
 #include "CommonFramework/Language.h"
-#include "Pokemon/Pokemon_StatsCalculation.h"
 
 
 namespace PokemonAutomation{
@@ -24,8 +23,14 @@ class VideoOverlaySet;
 namespace NintendoSwitch{
 namespace PokemonFRLG{
 
-using namespace Pokemon;
-
+struct PokemonFRLG_LevelUpStats{
+    std::optional<unsigned> hp;
+    std::optional<unsigned> attack;
+    std::optional<unsigned> defense;
+    std::optional<unsigned> sp_attack;
+    std::optional<unsigned> sp_defense;
+    std::optional<unsigned> speed;
+};
 
 class BattleLevelUpReader {
 public:
@@ -33,7 +38,7 @@ public:
 
     void make_overlays(VideoOverlaySet &items) const;
 
-    StatReads read_stats(Logger &logger, const ImageViewRGB32& frame) const;
+    PokemonFRLG_LevelUpStats read_stats(Logger &logger, const ImageViewRGB32& frame);
 
 private:
     Color m_color;

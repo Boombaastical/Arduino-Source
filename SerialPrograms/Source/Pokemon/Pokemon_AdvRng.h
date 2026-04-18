@@ -15,13 +15,13 @@
 namespace PokemonAutomation{
 namespace Pokemon{
 
-struct AdvIvGroup{
+struct IvGroup{
     uint8_t iv0;
     uint8_t iv1;
     uint8_t iv2;
 };
 
-struct AdvIVs{
+struct IVs{
     uint8_t hp = 0;
     uint8_t attack = 0;
     uint8_t defense = 0;
@@ -30,7 +30,7 @@ struct AdvIVs{
     uint8_t speed = 0;
 };
 
-enum class AdvNature{
+enum class Nature{
     Hardy,
     Lonely,
     Brave,
@@ -59,26 +59,26 @@ enum class AdvNature{
     Any
 };
 
-enum class AdvGender{
+enum class Gender{
     Male,
     Female,
     Any
 };
 
-enum class AdvAbility{
+enum class Ability{
     Zero,
     One,
     Any
 };
 
-enum class AdvShinyType{
+enum class ShinyType{
     Normal,
     Star,
     Square,
     Any
 };
 
-enum class AdvRngMethod{
+enum class RngMethod{
     Method1,
     Method2,
     Method4,
@@ -88,7 +88,7 @@ enum class AdvRngMethod{
 struct AdvRngState{
     uint16_t seed;
     uint64_t advance;
-    AdvRngMethod method;
+    RngMethod method;
     uint32_t s0;
     uint32_t s1;
     uint32_t s2;
@@ -103,28 +103,18 @@ struct AdvRngState{
 struct AdvPokemonResult{
     uint32_t pid;
     uint8_t gender;
-    AdvNature nature;
-    AdvAbility ability;
-    AdvIVs ivs;
-};
-
-struct AdvObservedPokemon{
-    AdvGender gender;
-    AdvNature nature;
-    AdvAbility ability;
-    std::vector<uint8_t> level;
-    std::vector<StatReads> stats;
-    std::vector<EVs> evs;
-    AdvShinyType shiny;
+    Nature nature;
+    Ability ability;
+    IVs ivs;
 };
 
 struct AdvRngFilters{
-    AdvGender gender;
-    AdvNature nature;
-    AdvAbility ability;
+    Gender gender;
+    Nature nature;
+    Ability ability;
     IvRanges ivs;
-    AdvShinyType shiny;
-    AdvRngMethod method;
+    ShinyType shiny;
+    RngMethod method;
 };
 
 class AdvRng{
@@ -133,7 +123,7 @@ public:
     AdvRngState state;
 
     AdvRng(uint16_t seed, AdvRngState state);
-    AdvRng(uint16_t seed, uint64_t min_advances, AdvRngMethod method = AdvRngMethod::Method1);
+    AdvRng(uint16_t seed, uint64_t min_advances, RngMethod method = RngMethod::Method1);
 
     void set_seed(uint16_t seed);
     void set_state_advances(uint64_t advances);

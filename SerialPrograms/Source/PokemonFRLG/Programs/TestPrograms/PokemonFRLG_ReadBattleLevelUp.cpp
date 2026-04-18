@@ -70,19 +70,19 @@ void ReadBattleLevelUp::program(
 
     env.log("Reading stats...");
     VideoSnapshot screen1 = env.console.video().snapshot();
-    StatReads stats = reader.read_stats(env.logger(), screen1);
+    PokemonFRLG_LevelUpStats stats = reader.read_stats(env.logger(), screen1);
 
-    env.log("Max HP: " + (stats.hp > 0 ? std::to_string(stats.hp) : "???"));
+    env.log("Max HP: " + (stats.hp.has_value() ? std::to_string(*stats.hp) : "???"));
     env.log("Attack: " +
-            (stats.attack > 0 ? std::to_string(stats.attack) : "???"));
+            (stats.attack.has_value() ? std::to_string(*stats.attack) : "???"));
     env.log("Defense: " +
-            (stats.defense > 0 ? std::to_string(stats.defense) : "???"));
+            (stats.defense.has_value() ? std::to_string(*stats.defense) : "???"));
     env.log("Sp. Attack: " +
-            (stats.spatk > 0 ? std::to_string(stats.spatk) : "???"));
+            (stats.sp_attack.has_value() ? std::to_string(*stats.sp_attack) : "???"));
     env.log("Sp. Defense: " +
-            (stats.spdef > 0 ? std::to_string(stats.spdef) : "???"));
+            (stats.sp_defense.has_value() ? std::to_string(*stats.sp_defense) : "???"));
     env.log("Speed: " +
-            (stats.speed > 0 ? std::to_string(stats.speed) : "???"));
+            (stats.speed.has_value() ? std::to_string(*stats.speed) : "???"));
 
     env.log("Finished Reading Stats. Verification boxes are on overlay.",
                     COLOR_BLUE);

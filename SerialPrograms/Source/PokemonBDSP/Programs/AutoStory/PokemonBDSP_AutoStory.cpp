@@ -1,12 +1,9 @@
-/*  BDSP AutoStory
- *
- *  From: https://github.com/PokemonAutomation/
- *
- */
-
 #include "PokemonBDSP_AutoStory.h"
+
 #include "BDSP_RouteBuilder.h"
+
 #include "CommonFramework/Globals.h"
+
 #include "CommonTools/Async/InferenceRoutines.h"
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
 #include "NintendoSwitch/Inference/NintendoSwitch_HomeMenuDetector.h"
@@ -38,6 +35,7 @@ BDSPAutoStory_Descriptor::BDSPAutoStory_Descriptor()
           )
 {}
 
+
 std::unique_ptr<SingleSwitchProgramInstance>
 BDSPAutoStory_Descriptor::make_instance() const{
     return std::make_unique<BDSPAutoStory>();
@@ -50,8 +48,56 @@ BDSPAutoStory_Descriptor::make_instance() const{
 
 BDSPAutoStory::BDSPAutoStory()
     : SingleSwitchProgramInstance()
+
+    , ROUTE_TYPE(
+          "<b>Route Type:</b>",
+          {
+           {BDSPRouteType::OutsideHelp, "outside_help", "Outside Help"},
+           {BDSPRouteType::NoOutsideHelp, "no_outside_help", "No Outside Help"},
+           },
+          LockMode::LOCK_WHILE_RUNNING,
+          BDSPRouteType::NoOutsideHelp
+          )
+
+    , STARTER_ENABLED(
+          "<b>Enable Starter Selection:</b>",
+          LockMode::LOCK_WHILE_RUNNING,
+          false
+          )
+
+    , STARTER_SELECT(
+          "<b>Starter:</b>",
+          {
+           {BDSPStarter::Chimchar, "chimchar", "Chimchar"},
+           {BDSPStarter::Piplup, "piplup", "Piplup"},
+           {BDSPStarter::Turtwig, "turtwig", "Turtwig"},
+           },
+          LockMode::LOCK_WHILE_RUNNING,
+          BDSPStarter::Chimchar
+          )
+
+    , STARTER_SHINY(
+          "<b>Shiny Starter:</b>",
+          LockMode::LOCK_WHILE_RUNNING,
+          false
+          )
+
+    , CATCH_LEGENDARY(
+          "<b>Catch Box Legendary:</b>",
+          LockMode::LOCK_WHILE_RUNNING,
+          false
+          )
+
 {
-    PA_ADD_OPTION(ROUTE_OPTIONS);
+
+    PA_ADD_OPTION(ROUTE_TYPE);
+
+    PA_ADD_OPTION(STARTER_ENABLED);
+    PA_ADD_OPTION(STARTER_SELECT);
+    PA_ADD_OPTION(STARTER_SHINY);
+
+    PA_ADD_OPTION(CATCH_LEGENDARY);
+
 }
 
 
@@ -69,11 +115,13 @@ void BDSPAutoStory::program(
     // Fixed date: June 9, 18:30
     config.set_datetime = DateTime{2025, 6, 9, 18, 30, 0};
 
-    config.route_type       = ROUTE_OPTIONS.ROUTE_TYPE;
-    config.starter_selected = ROUTE_OPTIONS.STARTER_ENABLED;
-    config.starter          = ROUTE_OPTIONS.STARTER_SELECT;
-    config.starter_shiny    = ROUTE_OPTIONS.STARTER_SHINY;
-    config.catch_box_legendary = ROUTE_OPTIONS.CATCH_LEGENDARY;
+    config.route_type = ROUTE_TYPE;
+
+    config.starter_selected = STARTER_ENABLED;
+    config.starter = STARTER_SELECT;
+    config.starter_shiny = STARTER_SHINY;
+
+    config.catch_box_legendary = CATCH_LEGENDARY;
 
 
     DateTime target_datetime = config.set_datetime;
@@ -87,6 +135,7 @@ void BDSPAutoStory::program(
 
         home_to_date_time(env.console, context, true);
 
+        // Press A to enter the date change screen
         pbf_press_button(context, BUTTON_A, 80ms, 240ms);
         context.wait_for_all_requests();
 
@@ -99,14 +148,17 @@ void BDSPAutoStory::program(
             target_datetime
             );
 
+        // Confirm the date change
         pbf_press_button(context, BUTTON_A, 160ms, 340ms);
         context.wait_for_all_requests();
 
         env.console.log("Date set successfully. Returning to game...");
 
+        // Return to the game from home
         resume_game_from_home(env.console, context);
         context.wait_for_all_requests();
 
+        // Wait for the game to fully load - player should be in their room
         env.console.log("Waiting for game to fully load...");
         pbf_wait(context, 5000ms);
         context.wait_for_all_requests();
