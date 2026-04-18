@@ -9,18 +9,18 @@
 #include "PokemonFRLG_Panels.h"
 
 #include "PokemonFRLG_Settings.h"
-
+#include "Programs/Farming/PokemonFRLG_ItemDuplication.h"
 #include "Programs/Farming/PokemonFRLG_LuckyEggFarmer.h"
 #include "Programs/Farming/PokemonFRLG_NuggetBridgeFarmer.h"
 #include "Programs/Farming/PokemonFRLG_PickupFarmer.h"
 #include "Programs/Farming/PokemonFRLG_EvTrainer.h"
 #include "Programs/ShinyHunting/PokemonFRLG_GiftReset.h"
-#include "Programs/ShinyHunting/PokemonFRLG_RngHelper.h"
 #include "Programs/ShinyHunting/PokemonFRLG_LegendaryReset.h"
 #include "Programs/ShinyHunting/PokemonFRLG_LegendaryRunAway.h"
 #include "Programs/ShinyHunting/PokemonFRLG_PrizeCornerReset.h"
 #include "Programs/ShinyHunting/PokemonFRLG_ShinyHunt-Fishing.h"
 #include "Programs/ShinyHunting/PokemonFRLG_ShinyHunt-Overworld.h"
+#include "Programs/RngManipulation/PokemonFRLG_RngHelper.h"
 #include "Programs/TestPrograms/PokemonFRLG_SoundListener.h"
 #include "Programs/TestPrograms/PokemonFRLG_ReadStats.h"
 #include "Programs/TestPrograms/PokemonFRLG_ReadBattleLevelUp.h"
@@ -59,8 +59,11 @@ std::vector<PanelEntry> PanelListFactory::make_panels() const{
     ret.emplace_back(make_single_switch_program<ShinyHuntOverworld_Descriptor, ShinyHuntOverworld>());
     ret.emplace_back(make_single_switch_program<PrizeCornerReset_Descriptor, PrizeCornerReset>());
 
+    ret.emplace_back("---- RNG Manipulation  ----");
+
     if (IS_BETA_VERSION || PreloadSettings::instance().DEVELOPER_MODE){
         ret.emplace_back("---- Untested/Beta/WIP ----");
+        ret.emplace_back(make_single_switch_program<ItemDuplication_Descriptor, ItemDuplication>());
         ret.emplace_back(make_single_switch_program<LuckyEggFarmer_Descriptor, LuckyEggFarmer>());
         ret.emplace_back(make_single_switch_program<LegendaryRunAway_Descriptor, LegendaryRunAway>());
         ret.emplace_back(make_single_switch_program<RngHelper_Descriptor, RngHelper>());
