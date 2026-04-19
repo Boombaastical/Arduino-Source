@@ -1370,6 +1370,32 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonBDSP/PokemonBDSP_Settings.h
     Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStory.cpp
     Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStory.h
+    Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStoryTools.cpp
+    Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStoryTools.h
+    Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_RouteBuilder.cpp
+    Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_RouteBuilder.h
+    Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_RouteConfig.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/BaseRoute.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/BaseRoute.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/DateTimeSetup.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/DateTimeSetup.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/Legendary_Segment.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/Legendary_Segment.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/NoOutsideHelp_Modifiers.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/NoOutsideHelp_Modifiers.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/OutsideHelp_Modifiers.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/OutsideHelp_Modifiers.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Chimchar.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Chimchar.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Piplup.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Piplup.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Turtwig.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Turtwig.h
+    Source/PokemonBDSP/Programs/AutoStory/Routes/TutorialPart2.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Routes/TutorialPart2.h
+    Source/PokemonBDSP/Programs/AutoStory/Utils/PokemonBDSP_RouteConfig.h
+    Source/PokemonBDSP/Programs/AutoStory/Options/PokemonBDSP_AutoStory_Options.cpp
+        Source/PokemonBDSP/Programs/AutoStory/Options/PokemonBDSP_AutoStory_Options.h
     Source/PokemonBDSP/Programs/Eggs/PokemonBDSP_EggAutonomous.cpp
     Source/PokemonBDSP/Programs/Eggs/PokemonBDSP_EggAutonomous.h
     Source/PokemonBDSP/Programs/Eggs/PokemonBDSP_EggAutonomousState.cpp

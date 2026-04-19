@@ -9,7 +9,7 @@ namespace PokemonAutomation {
         namespace PokemonBDSP {
 
             // Tutorial Part 1: Initial Game Navigation
-            // Routes the player from their starting house to the starter Pokémon selection screen.
+            // Routes the player from their starting house to the starter Pokemon selection screen.
             // This segment handles dialogue with Mom and Barry, navigating through Twinleaf Town,
             // and reaching the point where the player selects their starting Pokémon.
 

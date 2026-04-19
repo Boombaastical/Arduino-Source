@@ -3,6 +3,8 @@
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
 #include "PokemonBDSP/Inference/PokemonBDSP_DialogDetector.h"
 
+using namespace std::chrono_literals;
+
 namespace PokemonAutomation {
     namespace NintendoSwitch {
         namespace PokemonBDSP {
@@ -45,40 +47,40 @@ namespace PokemonAutomation {
                 // Navigate from starter selection location to professor meeting point
                 // This segment routes through early map progression
                 
-                pbf_press_dpad(context, DPAD_DOWN, 20, 105);
-                pbf_press_dpad(context, DPAD_DOWN, 20, 105);
-                pbf_press_dpad(context, DPAD_DOWN, 20, 105);
-                pbf_press_dpad(context, DPAD_DOWN, 20, 105);
-                pbf_press_dpad(context, DPAD_DOWN, 20, 105);
-                pbf_press_dpad(context, DPAD_DOWN, 20, 105);
-                pbf_press_dpad(context, DPAD_DOWN, 20, 105);
-                pbf_press_dpad(context, DPAD_DOWN, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
-                pbf_press_dpad(context, DPAD_RIGHT, 20, 105);
+                pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
 
                 // Wait for professor dialogue
                 wait_for_dialogue(stream, context, "Phase 1 (Professor Introduction)");
 
                 // Mash through professor's initial greeting
-                pbf_mash_button(context, BUTTON_A, 200);
+                pbf_mash_button(context, BUTTON_A, 200ms);
                 pbf_wait(context, 1000ms); // Wait for dialogue progression
 
                 // Navigate through subsequent areas and dialogue sequences

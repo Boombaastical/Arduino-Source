@@ -9,9 +9,9 @@ namespace PokemonAutomation {
     namespace NintendoSwitch {
         namespace PokemonBDSP {
             // Tutorial Part 1: Initial Game Navigation
-            // Routes the player from their starting house to the starter Pokémon selection screen.
+            // Routes the player from their starting house to the starter Pokemon selection screen.
             // This segment handles dialogue with Mom and Barry, navigating through Twinleaf Town,
-            // and reaching the point where the player selects their starting Pokémon.
+            // and reaching the point where the player selects their starting Pokï¿½mon.
             // Begins from player's room after character creation is complete.
             
                         
@@ -232,7 +232,7 @@ namespace PokemonAutomation {
             }
 
             // Tutorial Part 2: Starter Selection and Early Game Navigation
-            // This segment handles the starter Pokémon selection and the initial gameplay
+            // This segment handles the starter Pokï¿½mon selection and the initial gameplay
             // after leaving the starting town. Add specific navigation and dialogue sequences here.
             static void starter_selection_navigation(VideoStream& stream, ProControllerContext& context) {
                 // TODO: Add navigation for starter selection screen

@@ -4,7 +4,7 @@
 
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
 
-#include "BDSP_RouteConfig.h"
+#include "PokemonBDSP_RouteConfig.h"
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{

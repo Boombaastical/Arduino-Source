@@ -10,7 +10,7 @@
 #include "Common/Cpp/Options/GroupOption.h"
 #include "Common/Cpp/Options/BooleanCheckBoxOption.h"
 #include "Common/Cpp/Options/EnumDropdownOption.h"
-#include "../BDSP_RouteConfig.h"
+#include "../PokemonBDSP_RouteConfig.h"
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{

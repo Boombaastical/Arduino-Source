@@ -5,7 +5,7 @@
 #include "CommonFramework/Tools/VideoStream.h"
 #include "NintendoSwitch/Controllers/Procon/NintendoSwitch_ProController.h"
 
-#include "BDSP_RouteConfig.h"
+#include "PokemonBDSP_RouteConfig.h"
 
 namespace PokemonAutomation {
     namespace NintendoSwitch {
