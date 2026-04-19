@@ -1,10 +1,12 @@
 #pragma once
 
+#include <memory>
+#include <vector>
 #include "Common/Cpp/Options/BooleanCheckBoxOption.h"
-
+#include "Common/Cpp/Options/EnumDropdownOption.h"
+#include "CommonFramework/Notifications/EventNotificationsTable.h"
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
-
-#include "PokemonBDSP_RouteConfig.h"
+#include "PokemonBDSP_AutoStoryTools.h"
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{
@@ -15,12 +17,13 @@ public:
     BDSPAutoStory_Descriptor();
 
     virtual std::unique_ptr<SingleSwitchProgramInstance> make_instance() const override;
+    virtual std::unique_ptr<StatsTracker> make_stats() const override;
 };
 
 
-class BDSPAutoStory : public SingleSwitchProgramInstance{
+class BDSPAutoStory : public SingleSwitchProgramInstance, public ConfigOption::Listener{
 public:
-
+    ~BDSPAutoStory();
     BDSPAutoStory();
 
     virtual void program(
@@ -29,17 +32,19 @@ public:
         ) override;
 
 private:
+    virtual void on_config_value_changed(void* object) override;
 
-    EnumDropdownOption<BDSPRouteType> ROUTE_TYPE;
+private:
+    std::vector<std::unique_ptr<BooleanCheckBoxOption>> SEGMENT_CHECKBOXES;
+    bool m_updating = false;
 
-    BooleanCheckBoxOption STARTER_ENABLED;
-
-    EnumDropdownOption<BDSPStarter> STARTER_SELECT;
-
+    EnumDropdownOption<StarterChoice> STARTERCHOICE;
     BooleanCheckBoxOption STARTER_SHINY;
-
     BooleanCheckBoxOption CATCH_LEGENDARY;
+    EnumDropdownOption<HelpMode> HELP_MODE;
 
+    EventNotificationOption NOTIFICATION_STATUS_UPDATE;
+    EventNotificationsOption NOTIFICATIONS;
 };
 
 }

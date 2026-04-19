@@ -49,6 +49,11 @@ enum class StarterChoice{
     PIPLUP,
 };
 
+enum class HelpMode{
+    NO_OUTSIDE_HELP,
+    OUTSIDE_HELP,
+};
+
 struct AutoStoryOptions{
     Language language;
     StarterChoice starter_choice;

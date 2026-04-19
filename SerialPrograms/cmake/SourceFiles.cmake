@@ -1372,30 +1372,37 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStory.h
     Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStoryTools.cpp
     Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStoryTools.h
-    Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_RouteBuilder.cpp
-    Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_RouteBuilder.h
-    Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_RouteConfig.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/BaseRoute.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/BaseRoute.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/DateTimeSetup.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/DateTimeSetup.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/Legendary_Segment.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/Legendary_Segment.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/NoOutsideHelp_Modifiers.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/NoOutsideHelp_Modifiers.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/OutsideHelp_Modifiers.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/OutsideHelp_Modifiers.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Chimchar.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Chimchar.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Piplup.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Piplup.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Turtwig.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/Starter_Turtwig.h
-    Source/PokemonBDSP/Programs/AutoStory/Routes/TutorialPart2.cpp
-    Source/PokemonBDSP/Programs/AutoStory/Routes/TutorialPart2.h
-    Source/PokemonBDSP/Programs/AutoStory/Utils/PokemonBDSP_RouteConfig.h
-    Source/PokemonBDSP/Programs/AutoStory/Options/PokemonBDSP_AutoStory_Options.cpp
-        Source/PokemonBDSP/Programs/AutoStory/Options/PokemonBDSP_AutoStory_Options.h
+
+
+
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 00.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 00.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 01.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 01.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 02.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 02.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 03.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 03.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 04.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 04.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 05.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 05.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 06.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 06.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 07.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 07.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 08.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 08.h"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 09.cpp"
+    "Source/PokemonBDSP/Programs/AutoStory/Story segments/PokemonBDSP_AutoStory_Segment 09.h"
+    Source/PokemonBDSP/Programs/AutoStory/Utils/PokemonBDSP_AutoStory_Battle.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Utils/PokemonBDSP_AutoStory_Battle.h
+    Source/PokemonBDSP/Programs/AutoStory/Utils/PokemonBDSP_AutoStory_Dialog.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Utils/PokemonBDSP_AutoStory_Dialog.h
+    Source/PokemonBDSP/Programs/AutoStory/Utils/PokemonBDSP_AutoStory_Navigation.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Utils/PokemonBDSP_AutoStory_Navigation.h
+    Source/PokemonBDSP/Programs/AutoStory/Detect/PokemonBDSP_AutoStory_OverworldDetector.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Detect/PokemonBDSP_AutoStory_OverworldDetector.h
     Source/PokemonBDSP/Programs/Eggs/PokemonBDSP_EggAutonomous.cpp
     Source/PokemonBDSP/Programs/Eggs/PokemonBDSP_EggAutonomous.h
     Source/PokemonBDSP/Programs/Eggs/PokemonBDSP_EggAutonomousState.cpp

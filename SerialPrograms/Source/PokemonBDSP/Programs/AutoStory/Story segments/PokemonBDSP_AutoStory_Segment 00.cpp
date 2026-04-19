@@ -5,13 +5,364 @@
  *
  */
 
+#include "CommonTools/Async/InferenceRoutines.h"
+#include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_DialogDetector.h"
 #include "../PokemonBDSP_AutoStoryTools.h"
 #include "PokemonBDSP_AutoStory_Segment 00.h"
+
+using namespace std::chrono_literals;
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{
 namespace PokemonBDSP{
 
+
+// ---------------------------------------------------------------------------
+//  Shared helper (dialogue wait with cyan/red fallback)
+// ---------------------------------------------------------------------------
+
+static void wait_for_dialogue(VideoStream& stream, ProControllerContext& context, const std::string& phase_name){
+    ShortDialogWatcher watcher_cyan(COLOR_CYAN);
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
+        { watcher_cyan }
+    );
+    if (ret == 0) return;
+
+    ShortDialogWatcher watcher_red(COLOR_RED);
+    ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
+        { watcher_red }
+    );
+    if (ret == 0) return;
+
+    stream.log("[WARNING] " + phase_name + ": Dialogue detection failed with both colors, proceeding anyway");
+}
+
+
+// ---------------------------------------------------------------------------
+//  Tutorial Part 2 navigation (from Routes/TutorialPart2.cpp)
+//  Navigates from player starting position toward the professor area.
+// ---------------------------------------------------------------------------
+
+static void tutorial_part_2_navigation(VideoStream& stream, ProControllerContext& context){
+    pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_DOWN, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 20ms, 105ms);
+
+    wait_for_dialogue(stream, context, "Phase 1 (Professor Introduction)");
+
+    pbf_mash_button(context, BUTTON_A, 200ms);
+    pbf_wait(context, 1000ms);
+}
+
+
+// ---------------------------------------------------------------------------
+//  Starter selection (from Routes/Starter_*.cpp)
+// ---------------------------------------------------------------------------
+
+static void select_turtwig(VideoStream& stream, ProControllerContext& context){
+    stream.log("[DEBUG] Turtwig Selection: Starting starter selection");
+
+    pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
+    context.wait_for_all_requests();
+
+    ShortDialogWatcher watcher(COLOR_CYAN);
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
+        { watcher }
+    );
+    if (ret != 0){
+        ShortDialogWatcher watcher_red(COLOR_RED);
+        ret = run_until<ProControllerContext>(
+            stream, context,
+            [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
+            { watcher_red }
+        );
+    }
+    stream.log(ret == 0 ? "[DEBUG] Turtwig Selection: Confirmation dialogue detected"
+                        : "[WARNING] Turtwig Selection: Dialogue detection failed, proceeding anyway");
+
+    pbf_wait(context, 400ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
+    pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
+    context.wait_for_all_requests();
+    stream.log("[DEBUG] Turtwig Selection: Selection complete");
+}
+
+static void select_chimchar(VideoStream& stream, ProControllerContext& context){
+    stream.log("[DEBUG] Chimchar Selection: Starting starter selection");
+
+    pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
+    pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
+    context.wait_for_all_requests();
+
+    ShortDialogWatcher watcher(COLOR_CYAN);
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
+        { watcher }
+    );
+    if (ret != 0){
+        ShortDialogWatcher watcher_red(COLOR_RED);
+        ret = run_until<ProControllerContext>(
+            stream, context,
+            [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
+            { watcher_red }
+        );
+    }
+    stream.log(ret == 0 ? "[DEBUG] Chimchar Selection: Confirmation dialogue detected"
+                        : "[WARNING] Chimchar Selection: Dialogue detection failed, proceeding anyway");
+
+    pbf_wait(context, 400ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
+    pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
+    context.wait_for_all_requests();
+    stream.log("[DEBUG] Chimchar Selection: Selection complete");
+}
+
+static void select_piplup(VideoStream& stream, ProControllerContext& context){
+    stream.log("[DEBUG] Piplup Selection: Starting starter selection");
+
+    pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
+    pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
+    context.wait_for_all_requests();
+
+    ShortDialogWatcher watcher(COLOR_CYAN);
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
+        { watcher }
+    );
+    if (ret != 0){
+        ShortDialogWatcher watcher_red(COLOR_RED);
+        ret = run_until<ProControllerContext>(
+            stream, context,
+            [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
+            { watcher_red }
+        );
+    }
+    stream.log(ret == 0 ? "[DEBUG] Piplup Selection: Confirmation dialogue detected"
+                        : "[WARNING] Piplup Selection: Dialogue detection failed, proceeding anyway");
+
+    pbf_wait(context, 400ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
+    pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
+    context.wait_for_all_requests();
+    stream.log("[DEBUG] Piplup Selection: Selection complete");
+}
+
+
+// ---------------------------------------------------------------------------
+//  Base route navigation (from Routes/BaseRoute.cpp)
+//  Navigates from player's room to Route 201 through Mom/Barry dialogues.
+// ---------------------------------------------------------------------------
+
+static void intro_navigation(VideoStream& stream, ProControllerContext& context){
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+
+    wait_for_dialogue(stream, context, "Phase 2 (Mom)");
+
+    pbf_mash_button(context, BUTTON_A, 5000ms);
+    pbf_wait(context, 5000ms);
+
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+
+    wait_for_dialogue(stream, context, "Phase 4 (Mom Warning)");
+
+    pbf_mash_button(context, BUTTON_A, 2500ms);
+    pbf_wait(context, 800ms);
+
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+
+    wait_for_dialogue(stream, context, "Phase 6 (Barry 2nd)");
+
+    pbf_mash_button(context, BUTTON_A, 500ms);
+    pbf_wait(context, 800ms);
+
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+
+    wait_for_dialogue(stream, context, "Phase 8 (Barry Final)");
+
+    pbf_mash_button(context, BUTTON_A, 500ms);
+    pbf_wait(context, 800ms);
+
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+
+    wait_for_dialogue(stream, context, "Phase 9 (Barry Route 201)");
+
+    pbf_mash_button(context, BUTTON_A, 500ms);
+
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+}
+
+
+// ---------------------------------------------------------------------------
+//  Segment / Checkpoint classes
+// ---------------------------------------------------------------------------
 
 std::string AutoStory_Segment_00::name()       const{ return "00: Intro Cinematic to Starter Choice"; }
 std::string AutoStory_Segment_00::start_text() const{ return "Start: Game launched, beginning cinematic playing."; }
@@ -57,7 +408,18 @@ void checkpoint_00(
 ){
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/){
-            // TODO: implement Segment 00 gameplay logic
+            // 1. Tutorial navigation (TutorialPart2)
+            tutorial_part_2_navigation(env.console, context);
+
+            // 2. Starter selection
+            switch (options.starter_choice){
+                case StarterChoice::TURTWIG:  select_turtwig(env.console, context);  break;
+                case StarterChoice::CHIMCHAR: select_chimchar(env.console, context); break;
+                case StarterChoice::PIPLUP:   select_piplup(env.console, context);   break;
+            }
+
+            // 3. Base route navigation (BaseRoute)
+            intro_navigation(env.console, context);
         }
     );
 }

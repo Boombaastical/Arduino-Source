@@ -42,8 +42,17 @@ public:
 };
 
 // start: seventh badge acquired
-// end:   eighth Gym Badge acquired (Sunyshore City)
+// end:   legendary encounter (Spear Pillar / Mt. Coronet)
 void checkpoint_08(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+);
+
+// start: legendary encounter
+// end:   eighth Gym Badge acquired (Sunyshore City)
+void checkpoint_08_legendary(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
