@@ -38,10 +38,15 @@ private:
     std::vector<std::unique_ptr<BooleanCheckBoxOption>> SEGMENT_CHECKBOXES;
     bool m_updating = false;
 
-    EnumDropdownOption<StarterChoice> STARTERCHOICE;
-    BooleanCheckBoxOption STARTER_SHINY;
-    BooleanCheckBoxOption CATCH_LEGENDARY;
-    EnumDropdownOption<HelpMode> HELP_MODE;
+    EnumDropdownOption<StarterChoice>      STARTERCHOICE;
+    BooleanCheckBoxOption                  STARTER_SHINY;
+    BooleanCheckBoxOption                  CATCH_LEGENDARY;
+    EnumDropdownOption<HelpMode>           HELP_MODE;
+    EnumDropdownOption<OutsideHelpPokemon> OUTSIDE_HELP_POKEMON;
+    EnumDropdownOption<TorterraMove>       OUTSIDE_HELP_ATTACK_1;
+    EnumDropdownOption<TorterraMove>       OUTSIDE_HELP_ATTACK_2;
+    EnumDropdownOption<TorterraMove>       OUTSIDE_HELP_ATTACK_3;
+    EnumDropdownOption<TorterraMove>       OUTSIDE_HELP_ATTACK_4;
 
     EventNotificationOption NOTIFICATION_STATUS_UPDATE;
     EventNotificationsOption NOTIFICATIONS;

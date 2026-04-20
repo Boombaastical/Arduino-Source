@@ -54,10 +54,41 @@ enum class HelpMode{
     OUTSIDE_HELP,
 };
 
+enum class OutsideHelpPokemon{
+    TORTERRA,
+};
+
+enum class TorterraMove{
+    EARTHQUAKE,
+    WOOD_HAMMER,
+    RAZOR_LEAF,
+    CRUNCH,
+    GIGA_DRAIN,
+    IRON_TAIL,
+    ROCK_TOMB,
+    FACADE,
+    STONE_EDGE,
+    ROCK_SLIDE,
+    BULLDOZE,
+    STRENGTH,
+    ROCK_SMASH,
+    ROCK_CLIMB,
+};
+
+//  Returns the JSON slug for a TorterraMove (e.g. "earthquake").
+const char* torterra_move_slug(TorterraMove move);
+
+struct OutsideHelpConfig{
+    OutsideHelpPokemon pokemon;
+    TorterraMove attacks[4];
+};
+
 struct AutoStoryOptions{
     Language language;
     StarterChoice starter_choice;
     EventNotificationOption& notif_status_update;
+    HelpMode help_mode;
+    OutsideHelpConfig outside_help;
 };
 
 

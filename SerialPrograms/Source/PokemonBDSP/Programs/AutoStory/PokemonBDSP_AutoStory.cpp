@@ -84,6 +84,8 @@ BDSPAutoStory_Descriptor::make_stats() const{
 // ---------------------------------------------------------------------------
 
 BDSPAutoStory::~BDSPAutoStory(){
+    OUTSIDE_HELP_POKEMON.remove_listener(*this);
+    HELP_MODE.remove_listener(*this);
     for (auto& cb : SEGMENT_CHECKBOXES){
         cb->remove_listener(*this);
     }
@@ -125,6 +127,103 @@ BDSPAutoStory::BDSPAutoStory()
           HelpMode::NO_OUTSIDE_HELP
           )
 
+    , OUTSIDE_HELP_POKEMON(
+          "<b>Pokemon:</b>",
+          {
+              {OutsideHelpPokemon::TORTERRA, "torterra", "Torterra"},
+          },
+          LockMode::LOCK_WHILE_RUNNING,
+          OutsideHelpPokemon::TORTERRA
+          )
+
+    , OUTSIDE_HELP_ATTACK_1(
+          "<b>Attack 1:</b>",
+          {
+              {TorterraMove::EARTHQUAKE,  "earthquake",  "Earthquake"},
+              {TorterraMove::WOOD_HAMMER, "wood_hammer", "Wood Hammer"},
+              {TorterraMove::RAZOR_LEAF,  "razor_leaf",  "Razor Leaf"},
+              {TorterraMove::CRUNCH,      "crunch",      "Crunch"},
+              {TorterraMove::GIGA_DRAIN,  "giga_drain",  "Giga Drain"},
+              {TorterraMove::IRON_TAIL,   "iron_tail",   "Iron Tail"},
+              {TorterraMove::ROCK_TOMB,   "rock_tomb",   "Rock Tomb"},
+              {TorterraMove::FACADE,      "facade",      "Facade"},
+              {TorterraMove::STONE_EDGE,  "stone_edge",  "Stone Edge"},
+              {TorterraMove::ROCK_SLIDE,  "rock_slide",  "Rock Slide"},
+              {TorterraMove::BULLDOZE,    "bulldoze",    "Bulldoze"},
+              {TorterraMove::STRENGTH,    "strength",    "Strength"},
+              {TorterraMove::ROCK_SMASH,  "rock_smash",  "Rock Smash"},
+              {TorterraMove::ROCK_CLIMB,  "rock_climb",  "Rock Climb"},
+          },
+          LockMode::LOCK_WHILE_RUNNING,
+          TorterraMove::EARTHQUAKE
+          )
+
+    , OUTSIDE_HELP_ATTACK_2(
+          "<b>Attack 2:</b>",
+          {
+              {TorterraMove::EARTHQUAKE,  "earthquake",  "Earthquake"},
+              {TorterraMove::WOOD_HAMMER, "wood_hammer", "Wood Hammer"},
+              {TorterraMove::RAZOR_LEAF,  "razor_leaf",  "Razor Leaf"},
+              {TorterraMove::CRUNCH,      "crunch",      "Crunch"},
+              {TorterraMove::GIGA_DRAIN,  "giga_drain",  "Giga Drain"},
+              {TorterraMove::IRON_TAIL,   "iron_tail",   "Iron Tail"},
+              {TorterraMove::ROCK_TOMB,   "rock_tomb",   "Rock Tomb"},
+              {TorterraMove::FACADE,      "facade",      "Facade"},
+              {TorterraMove::STONE_EDGE,  "stone_edge",  "Stone Edge"},
+              {TorterraMove::ROCK_SLIDE,  "rock_slide",  "Rock Slide"},
+              {TorterraMove::BULLDOZE,    "bulldoze",    "Bulldoze"},
+              {TorterraMove::STRENGTH,    "strength",    "Strength"},
+              {TorterraMove::ROCK_SMASH,  "rock_smash",  "Rock Smash"},
+              {TorterraMove::ROCK_CLIMB,  "rock_climb",  "Rock Climb"},
+          },
+          LockMode::LOCK_WHILE_RUNNING,
+          TorterraMove::ROCK_SLIDE
+          )
+
+    , OUTSIDE_HELP_ATTACK_3(
+          "<b>Attack 3:</b>",
+          {
+              {TorterraMove::EARTHQUAKE,  "earthquake",  "Earthquake"},
+              {TorterraMove::WOOD_HAMMER, "wood_hammer", "Wood Hammer"},
+              {TorterraMove::RAZOR_LEAF,  "razor_leaf",  "Razor Leaf"},
+              {TorterraMove::CRUNCH,      "crunch",      "Crunch"},
+              {TorterraMove::GIGA_DRAIN,  "giga_drain",  "Giga Drain"},
+              {TorterraMove::IRON_TAIL,   "iron_tail",   "Iron Tail"},
+              {TorterraMove::ROCK_TOMB,   "rock_tomb",   "Rock Tomb"},
+              {TorterraMove::FACADE,      "facade",      "Facade"},
+              {TorterraMove::STONE_EDGE,  "stone_edge",  "Stone Edge"},
+              {TorterraMove::ROCK_SLIDE,  "rock_slide",  "Rock Slide"},
+              {TorterraMove::BULLDOZE,    "bulldoze",    "Bulldoze"},
+              {TorterraMove::STRENGTH,    "strength",    "Strength"},
+              {TorterraMove::ROCK_SMASH,  "rock_smash",  "Rock Smash"},
+              {TorterraMove::ROCK_CLIMB,  "rock_climb",  "Rock Climb"},
+          },
+          LockMode::LOCK_WHILE_RUNNING,
+          TorterraMove::WOOD_HAMMER
+          )
+
+    , OUTSIDE_HELP_ATTACK_4(
+          "<b>Attack 4:</b>",
+          {
+              {TorterraMove::EARTHQUAKE,  "earthquake",  "Earthquake"},
+              {TorterraMove::WOOD_HAMMER, "wood_hammer", "Wood Hammer"},
+              {TorterraMove::RAZOR_LEAF,  "razor_leaf",  "Razor Leaf"},
+              {TorterraMove::CRUNCH,      "crunch",      "Crunch"},
+              {TorterraMove::GIGA_DRAIN,  "giga_drain",  "Giga Drain"},
+              {TorterraMove::IRON_TAIL,   "iron_tail",   "Iron Tail"},
+              {TorterraMove::ROCK_TOMB,   "rock_tomb",   "Rock Tomb"},
+              {TorterraMove::FACADE,      "facade",      "Facade"},
+              {TorterraMove::STONE_EDGE,  "stone_edge",  "Stone Edge"},
+              {TorterraMove::ROCK_SLIDE,  "rock_slide",  "Rock Slide"},
+              {TorterraMove::BULLDOZE,    "bulldoze",    "Bulldoze"},
+              {TorterraMove::STRENGTH,    "strength",    "Strength"},
+              {TorterraMove::ROCK_SMASH,  "rock_smash",  "Rock Smash"},
+              {TorterraMove::ROCK_CLIMB,  "rock_climb",  "Rock Climb"},
+          },
+          LockMode::LOCK_WHILE_RUNNING,
+          TorterraMove::CRUNCH
+          )
+
     , NOTIFICATION_STATUS_UPDATE("Status Update", true, false, std::chrono::seconds(30))
     , NOTIFICATIONS({
         &NOTIFICATION_STATUS_UPDATE,
@@ -152,7 +251,15 @@ BDSPAutoStory::BDSPAutoStory()
     PA_ADD_OPTION(STARTER_SHINY);
     PA_ADD_OPTION(CATCH_LEGENDARY);
     PA_ADD_OPTION(HELP_MODE);
+    PA_ADD_OPTION(OUTSIDE_HELP_POKEMON);
+    PA_ADD_OPTION(OUTSIDE_HELP_ATTACK_1);
+    PA_ADD_OPTION(OUTSIDE_HELP_ATTACK_2);
+    PA_ADD_OPTION(OUTSIDE_HELP_ATTACK_3);
+    PA_ADD_OPTION(OUTSIDE_HELP_ATTACK_4);
     PA_ADD_OPTION(NOTIFICATIONS);
+
+    HELP_MODE.add_listener(*this);
+    OUTSIDE_HELP_POKEMON.add_listener(*this);
 
     BDSPAutoStory::on_config_value_changed(this);
 }
@@ -213,6 +320,17 @@ void BDSPAutoStory::on_config_value_changed(void* object){
     STARTERCHOICE.set_visibility(starter_state);
     STARTER_SHINY.set_visibility(starter_state);
 
+    // Show outside-help options only when OUTSIDE_HELP is selected
+    bool show_help = ((HelpMode)HELP_MODE == HelpMode::OUTSIDE_HELP);
+    OUTSIDE_HELP_POKEMON.set_visibility(show_help ? ConfigOptionState::ENABLED : ConfigOptionState::HIDDEN);
+
+    bool show_attacks = show_help && ((OutsideHelpPokemon)OUTSIDE_HELP_POKEMON == OutsideHelpPokemon::TORTERRA);
+    ConfigOptionState attack_state = show_attacks ? ConfigOptionState::ENABLED : ConfigOptionState::HIDDEN;
+    OUTSIDE_HELP_ATTACK_1.set_visibility(attack_state);
+    OUTSIDE_HELP_ATTACK_2.set_visibility(attack_state);
+    OUTSIDE_HELP_ATTACK_3.set_visibility(attack_state);
+    OUTSIDE_HELP_ATTACK_4.set_visibility(attack_state);
+
     m_updating = false;
 }
 
@@ -231,7 +349,17 @@ void BDSPAutoStory::program(
     AutoStoryOptions options{
         Language::English,
         STARTERCHOICE,
-        NOTIFICATION_STATUS_UPDATE
+        NOTIFICATION_STATUS_UPDATE,
+        (HelpMode)HELP_MODE,
+        OutsideHelpConfig{
+            (OutsideHelpPokemon)OUTSIDE_HELP_POKEMON,
+            {
+                (TorterraMove)OUTSIDE_HELP_ATTACK_1,
+                (TorterraMove)OUTSIDE_HELP_ATTACK_2,
+                (TorterraMove)OUTSIDE_HELP_ATTACK_3,
+                (TorterraMove)OUTSIDE_HELP_ATTACK_4,
+            }
+        }
     };
 
     const auto& segments = ALL_SEGMENTS();

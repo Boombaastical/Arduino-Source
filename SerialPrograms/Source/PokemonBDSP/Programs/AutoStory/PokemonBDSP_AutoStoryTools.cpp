@@ -14,6 +14,27 @@ namespace NintendoSwitch{
 namespace PokemonBDSP{
 
 
+const char* torterra_move_slug(TorterraMove move){
+    switch (move){
+    case TorterraMove::EARTHQUAKE:  return "earthquake";
+    case TorterraMove::WOOD_HAMMER: return "wood-hammer";
+    case TorterraMove::RAZOR_LEAF:  return "razor-leaf";
+    case TorterraMove::CRUNCH:      return "crunch";
+    case TorterraMove::GIGA_DRAIN:  return "giga-drain";
+    case TorterraMove::IRON_TAIL:   return "iron-tail";
+    case TorterraMove::ROCK_TOMB:   return "rock-tomb";
+    case TorterraMove::FACADE:      return "facade";
+    case TorterraMove::STONE_EDGE:  return "stone-edge";
+    case TorterraMove::ROCK_SLIDE:  return "rock-slide";
+    case TorterraMove::BULLDOZE:    return "bulldoze";
+    case TorterraMove::STRENGTH:    return "strength";
+    case TorterraMove::ROCK_SMASH:  return "rock-smash";
+    case TorterraMove::ROCK_CLIMB:  return "rock-climb";
+    }
+    return "unknown";
+}
+
+
 void checkpoint_save(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,

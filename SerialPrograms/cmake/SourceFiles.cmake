@@ -1314,6 +1314,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonBDSP/Inference/Battles/PokemonBDSP_ExperienceGainDetector.h
     Source/PokemonBDSP/Inference/Battles/PokemonBDSP_StartBattleDetector.cpp
     Source/PokemonBDSP/Inference/Battles/PokemonBDSP_StartBattleDetector.h
+    Source/PokemonBDSP/Inference/Battles/PokemonBDSP_BattleOpponentNameReader.cpp
+    Source/PokemonBDSP/Inference/Battles/PokemonBDSP_BattleOpponentNameReader.h
     Source/PokemonBDSP/Inference/BoxSystem/PokemonBDSP_BoxDetector.cpp
     Source/PokemonBDSP/Inference/BoxSystem/PokemonBDSP_BoxDetector.h
     Source/PokemonBDSP/Inference/BoxSystem/PokemonBDSP_BoxGenderDetector.cpp
@@ -1374,6 +1376,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStory.h
     Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStoryTools.cpp
     Source/PokemonBDSP/Programs/AutoStory/PokemonBDSP_AutoStoryTools.h
+    Source/PokemonBDSP/Programs/AutoStory/Data/PokemonBDSP_AutoStory_BDSPData.cpp
+    Source/PokemonBDSP/Programs/AutoStory/Data/PokemonBDSP_AutoStory_BDSPData.h
 
 
 
