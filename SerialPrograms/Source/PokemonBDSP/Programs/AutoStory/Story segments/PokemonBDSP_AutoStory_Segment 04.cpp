@@ -99,16 +99,30 @@ static bool go_to_galactic_warehouse(
     pbf_wait(context, 6000ms);
     pbf_mash_button(context, BUTTON_B, 4000ms);
     pbf_wait(context, 2000ms);
-    pbf_move_left_joystick(context, {0, -1}, 3000ms, 100ms); /* Replaces 14 Dpad down presses*/
-    pbf_move_left_joystick(context, {+1, 0}, 2000ms, 100ms); /* Replaces 14 Dpad right presses*/
-    pbf_move_left_joystick(context, {0, +1}, 600ms, 100ms); /* Replaces 4 Dpad up presses*/
-    pbf_move_left_joystick(context, {+1, 0}, 3200ms, 100ms); /* Replaces 25 Dpad right presses*/
-    pbf_move_left_joystick(context, {0, +1}, 1600ms, 100ms); /* Replaces 11 Dpad up presses*/
-    pbf_move_left_joystick(context, {-1, 0}, 2600ms, 100ms); /* Replaces 19 Dpad left presses*/
-    pbf_move_left_joystick(context, {0, +1}, 1500ms, 100ms); /* Replaces 9 Dpad up presses*/
-    pbf_move_left_joystick(context, {-1, 0}, 2400ms, 100ms); /* Replaces 11 Dpad left presses*/
-    pbf_move_left_joystick(context, {0, +1}, 4000ms, 100ms); /* Replaces 13 Dpad up presses*/
-    pbf_move_left_joystick(context, {+1, 0}, 1400ms, 100ms); /* Replaces 3 Dpad right presses*/
+    
+    /* Original code
+    pbf_move_left_joystick(context, {0, -1}, 3000ms, 100ms); Replaces 14 Dpad down presses
+    pbf_move_left_joystick(context, {+1, 0}, 2000ms, 100ms); Replaces 14 Dpad right presses
+    pbf_move_left_joystick(context, {0, +1}, 600ms, 100ms); Replaces 4 Dpad up presses
+    pbf_move_left_joystick(context, {+1, 0}, 3200ms, 100ms); Replaces 25 Dpad right presses
+    pbf_move_left_joystick(context, {0, +1}, 1600ms, 100ms); Replaces 11 Dpad up presses
+    pbf_move_left_joystick(context, {-1, 0}, 2600ms, 100ms); Replaces 19 Dpad left presses
+    pbf_move_left_joystick(context, {0, +1}, 1500ms, 100ms); Replaces 9 Dpad up presses
+    pbf_move_left_joystick(context, {-1, 0}, 2400ms, 100ms); Replaces 11 Dpad left presses
+    pbf_move_left_joystick(context, {0, +1}, 4000ms, 100ms); Replaces 13 Dpad up presses
+    pbf_move_left_joystick(context, {+1, 0}, 1400ms, 100ms); Replaces 3 Dpad right presses
+    */
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms); }}, 14);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms); }}, 14);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_UP, 80ms, 300ms); }}, 4);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms); }}, 25);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_UP, 80ms, 300ms); }}, 11);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms); }}, 19);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_UP, 80ms, 300ms); }}, 9);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms); }}, 11);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_UP, 80ms, 300ms); }}, 13);
+    repeat({ [&]{ pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms); }}, 3);
+    
     pbf_press_dpad(context, DPAD_DOWN, 280ms, 200ms);
     pbf_mash_button(context, BUTTON_A, 8000ms);
     BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
@@ -127,6 +141,18 @@ static bool go_to_galactic_warehouse(
     return true;
 }
 
+static bool handle_battle(
+    VideoStream& stream,
+    ProControllerContext& context
+    const std::string& trainerid
+){
+    if (trainerid == "veilstone_galactic_grunts_1"){
+        pbf_wait(context, 10000ms);
+        pbf_press_button(context, BUTTON_A, 80ms, 300ms);
+        pbf_press_button(context, BUTTON_A, 80ms, 300ms);
+        
+    }
+
 void checkpoint_04(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
@@ -141,16 +167,11 @@ void checkpoint_04(
             if (!go_to_galactic_warehouse(env.console, context)){
                 OperationFailedException::fire(ErrorReport::SEND_ERROR_REPORT, "go_to_galactic_warehouse: transition not detected.", env.console);
             }
-
-            if (options.help_mode == HelpMode::OUTSIDE_HELP){
-                handle_battle_with_outside_help(
-                    env.program_info(),
-                    env.console,
-                    context,
-                    "Veilstone_GalacticGrunts_2v2",
-                    options
-                );
+            if (!handle_battle(env.console, context, "veilstone_galactic_grunts_1")){
+                OperationFailedException::fire(ErrorReport::SEND_ERROR_REPORT, "go_to_galactic_warehouse: transition not detected.", env.console);
             }
+            
+
         }
     );
 }

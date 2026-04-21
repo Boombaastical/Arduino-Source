@@ -149,6 +149,9 @@ void checkpoint_reattempt_loop(
     std::function<void(size_t attempt_number)>&& action
 );
 
+//  Execute every action in `actions` in order, repeated `times` times.
+void repeat(std::initializer_list<std::function<void()>> actions, size_t times);
+
 
 }
 }

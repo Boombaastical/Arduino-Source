@@ -79,6 +79,16 @@ void checkpoint_reattempt_loop(
 }
 
 
+
+void repeat(std::initializer_list<std::function<void()>> actions, size_t times){
+    for (size_t i = 0; i < times; i++){
+        for (const auto& action : actions){
+            action();
+        }
+    }
+}
+
+
 }
 }
 }
