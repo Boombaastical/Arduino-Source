@@ -487,6 +487,8 @@ file(GLOB LIBRARY_SOURCES
     Source/CommonFramework/Recording/StreamHistoryTracker_SaveFrames.h
     Source/CommonFramework/Recording/StreamRecorder.cpp
     Source/CommonFramework/Recording/StreamRecorder.h
+    Source/CommonFramework/ResourceDownload/ResourceDownloadHelpers.cpp
+    Source/CommonFramework/ResourceDownload/ResourceDownloadHelpers.h
     Source/CommonFramework/Startup/NewVersionCheck.cpp
     Source/CommonFramework/Startup/NewVersionCheck.h
     Source/CommonFramework/Startup/SetupSettings.cpp
@@ -1557,6 +1559,16 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonFRLG/Programs/ShinyHunting/PokemonFRLG_ShinyHunt-Fishing.h
     Source/PokemonFRLG/Programs/ShinyHunting/PokemonFRLG_ShinyHunt-Overworld.cpp
     Source/PokemonFRLG/Programs/ShinyHunting/PokemonFRLG_ShinyHunt-Overworld.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_BlindNavigation.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_BlindNavigation.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngNavigation.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_HardReset.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_HardReset.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SidHelper.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SidHelper.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngHelper.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngHelper.h
     Source/PokemonFRLG/Programs/TestPrograms/PokemonFRLG_SoundListener.cpp
     Source/PokemonFRLG/Programs/TestPrograms/PokemonFRLG_SoundListener.h
     Source/PokemonFRLG/Programs/TestPrograms/PokemonFRLG_ReadStats.cpp
@@ -1848,6 +1860,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonLZA/Inference/PokemonLZA_ButtonDetector.h
     Source/PokemonLZA/Inference/PokemonLZA_DayNightChangeDetector.cpp
     Source/PokemonLZA/Inference/PokemonLZA_DayNightChangeDetector.h
+    Source/PokemonLZA/Inference/PokemonLZA_DayNightStateDetector.cpp
+    Source/PokemonLZA/Inference/PokemonLZA_DayNightStateDetector.h
     Source/PokemonLZA/Inference/PokemonLZA_DialogDetector.cpp
     Source/PokemonLZA/Inference/PokemonLZA_DialogDetector.h
     Source/PokemonLZA/Inference/PokemonLZA_HyperspaceRewardNameReader.cpp
