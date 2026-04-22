@@ -152,6 +152,23 @@ void checkpoint_reattempt_loop(
 //  Execute every action in `actions` in order, repeated `times` times.
 void repeat(std::initializer_list<std::function<void()>> actions, size_t times);
 
+//  Tracks the last D-pad direction pressed. Pass one per navigation function
+//  so each function gets a clean slate on each attempt.
+struct DpadState {
+    DpadPosition last_dir = DPAD_NONE;
+};
+
+//  Press `dir` on the D-pad `times` times (plus one extra if the direction
+//  changed from the previous call, since the first press turns the character).
+void repeat_dpad(
+    ProControllerContext& context,
+    DpadState& state,
+    DpadPosition dir,
+    Milliseconds press,
+    Milliseconds hold,
+    size_t times
+);
+
 
 }
 }

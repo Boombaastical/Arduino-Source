@@ -6,6 +6,7 @@
 
 #include "CommonFramework/Exceptions/OperationFailedException.h"
 #include "CommonFramework/Notifications/ProgramNotifications.h"
+#include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
 #include "PokemonBDSP/Programs/PokemonBDSP_GameNavigation.h"
 #include "PokemonBDSP_AutoStoryTools.h"
 
@@ -85,6 +86,24 @@ void repeat(std::initializer_list<std::function<void()>> actions, size_t times){
         for (const auto& action : actions){
             action();
         }
+    }
+}
+
+
+void repeat_dpad(
+    ProControllerContext& context,
+    DpadState& state,
+    DpadPosition dir,
+    Milliseconds press,
+    Milliseconds hold,
+    size_t times
+){
+    if (state.last_dir != DPAD_NONE && state.last_dir != dir){
+        times += 1;
+    }
+    state.last_dir = dir;
+    for (size_t i = 0; i < times; i++){
+        pbf_press_dpad(context, dir, press, hold);
     }
 }
 
