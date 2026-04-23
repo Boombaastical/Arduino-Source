@@ -17,32 +17,6 @@ namespace PokemonAutomation{
 namespace NintendoSwitch{
 namespace PokemonBDSP{
 
-
-// ---------------------------------------------------------------------------
-//  Shared helper (dialogue wait with cyan/red fallback)
-// ---------------------------------------------------------------------------
-
-static void wait_for_dialogue(VideoStream& stream, ProControllerContext& context, const std::string& phase_name){
-    ShortDialogWatcher watcher_cyan(COLOR_CYAN);
-    int ret = run_until<ProControllerContext>(
-        stream, context,
-        [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
-        { watcher_cyan }
-    );
-    if (ret == 0) return;
-
-    ShortDialogWatcher watcher_red(COLOR_RED);
-    ret = run_until<ProControllerContext>(
-        stream, context,
-        [](ProControllerContext& ctx){ ctx.wait_for(std::chrono::milliseconds(5000)); },
-        { watcher_red }
-    );
-    if (ret == 0) return;
-
-    stream.log("[WARNING] " + phase_name + ": Dialogue detection failed with both colors, proceeding anyway");
-}
-
-
 // ---------------------------------------------------------------------------
 //  Tutorial Part 2 navigation (from Routes/TutorialPart2.cpp)
 //  Navigates from player starting position toward the professor area.
@@ -223,6 +197,7 @@ static void intro_navigation(VideoStream& stream, ProControllerContext& context)
     pbf_mash_button(context, BUTTON_A, 2500ms);
     pbf_wait(context, 800ms);
 
+    pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
     pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
     pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
     pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
@@ -408,8 +383,8 @@ void checkpoint_00(
 ){
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/){
-            // 1. Tutorial navigation (TutorialPart2)
-            tutorial_part_2_navigation(env.console, context);
+            // 1. Intro starting from room
+            intro_navigation(env.console, context);
 
             // 2. Starter selection
             switch (options.starter_choice){
@@ -418,8 +393,8 @@ void checkpoint_00(
                 case StarterChoice::PIPLUP:   select_piplup(env.console, context);   break;
             }
 
-            // 3. Base route navigation (BaseRoute)
-            intro_navigation(env.console, context);
+            // 3. Going back to the professor
+            tutorial_part_2_navigation(env.console, context);
         }
     );
 }

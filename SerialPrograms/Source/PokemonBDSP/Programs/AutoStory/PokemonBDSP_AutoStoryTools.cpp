@@ -6,8 +6,11 @@
 
 #include "CommonFramework/Exceptions/OperationFailedException.h"
 #include "CommonFramework/Notifications/ProgramNotifications.h"
+#include "CommonTools/Async/InferenceRoutines.h"
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_DialogDetector.h"
 #include "PokemonBDSP/Programs/PokemonBDSP_GameNavigation.h"
+#include "Detect/PokemonBDSP_AutoStory_OverworldDetector.h"
 #include "PokemonBDSP_AutoStoryTools.h"
 
 namespace PokemonAutomation{
@@ -86,6 +89,70 @@ void repeat(std::initializer_list<std::function<void()>> actions, size_t times){
         for (const auto& action : actions){
             action();
         }
+    }
+}
+
+
+void wait_for_dialogue(
+    VideoStream& stream,
+    ProControllerContext& context,
+    const std::string& label,
+    Milliseconds timeout
+){
+    auto log_detected = [&]{
+        if (!label.empty()){
+            stream.log(label + " dialogue detected.");
+        }
+    };
+
+    ShortDialogWatcher watcher_cyan(COLOR_CYAN);
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [timeout](ProControllerContext& context){
+            context.wait_for(timeout);
+        },
+        {{watcher_cyan}}
+    );
+    if (ret == 0){ log_detected(); return; }
+
+    ShortDialogWatcher watcher_red(COLOR_RED);
+    ret = run_until<ProControllerContext>(
+        stream, context,
+        [timeout](ProControllerContext& context){
+            context.wait_for(timeout);
+        },
+        {{watcher_red}}
+    );
+    if (ret == 0){ log_detected(); return; }
+
+    OperationFailedException::fire(
+        ErrorReport::SEND_ERROR_REPORT,
+        (label.empty() ? "wait_for_dialogue" : label) + ": dialogue not detected within timeout.",
+        stream
+    );
+}
+
+
+void mash_until_dialogue_ends(
+    VideoStream& stream,
+    ProControllerContext& context,
+    Button button,
+    Milliseconds timeout
+){
+    OverworldWatcher overworld;
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [button, timeout](ProControllerContext& context){
+            pbf_mash_button(context, button, timeout);
+        },
+        {{overworld}}
+    );
+    if (ret < 0){
+        OperationFailedException::fire(
+            ErrorReport::SEND_ERROR_REPORT,
+            "mash_until_dialogue_ends: overworld not reached within timeout.",
+            stream
+        );
     }
 }
 

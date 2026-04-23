@@ -8,10 +8,12 @@
 #define PokemonAutomation_PokemonBDSP_AutoStoryTools_H
 
 #include <functional>
+#include <string>
 #include "Common/Cpp/Options/EnumDropdownOption.h"
 #include "CommonFramework/Language.h"
 #include "CommonFramework/Notifications/EventNotificationsTable.h"
 #include "CommonFramework/ProgramStats/StatsTracking.h"
+#include "CommonFramework/Tools/VideoStream.h"
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
 
 namespace PokemonAutomation{
@@ -167,6 +169,26 @@ void repeat_dpad(
     Milliseconds press,
     Milliseconds hold,
     size_t times
+);
+
+//  Wait (without pressing any buttons) until a short dialogue box appears.
+//  Logs `label + " dialogue detected."` when found (omit label to skip logging).
+//  Throws OperationFailedException if no dialogue appears within `timeout`.
+void wait_for_dialogue(
+    VideoStream& stream,
+    ProControllerContext& context,
+    const std::string& label = "",
+    Milliseconds timeout = std::chrono::seconds(60)
+);
+
+//  Mash `button` (default B) until the game returns to the free-roaming overworld
+//  (no dialogue, menu, or battle UI visible).
+//  Throws OperationFailedException if the overworld is not reached within `timeout`.
+void mash_until_dialogue_ends(
+    VideoStream& stream,
+    ProControllerContext& context,
+    Button button = BUTTON_B,
+    Milliseconds timeout = std::chrono::seconds(60)
 );
 
 
