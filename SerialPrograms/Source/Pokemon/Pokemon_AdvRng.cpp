@@ -5,6 +5,7 @@
  */
 
 #include <cstddef>
+#include <algorithm>
 #include "Pokemon_AdvRng.h"
 
 namespace PokemonAutomation{
@@ -31,7 +32,7 @@ uint32_t increment_internal_rng_state(uint32_t& state){
     return state * 0x41c64e6d + 0x6073;
 }
 
-AdvRngState rngstate_from_internal_state(uint16_t seed, uint64_t advances, uint32_t& state, RngMethod method){
+AdvRngState rngstate_from_internal_state(uint16_t seed, uint64_t advances, uint32_t& state, AdvRngMethod method){
     uint32_t s0 = state;
     uint32_t s1 = increment_internal_rng_state(s0);
     uint32_t s2 = increment_internal_rng_state(s1);
@@ -41,7 +42,7 @@ AdvRngState rngstate_from_internal_state(uint16_t seed, uint64_t advances, uint3
     return  {seed, advances, method, s0, s1, s2, s3, s4};
 }
 
-AdvRngState rngstate_from_seed(uint16_t& seed, uint64_t advances, RngMethod method){
+AdvRngState rngstate_from_seed(uint16_t seed, uint64_t advances, AdvRngMethod method){
     uint32_t state = seed;
     state = increment_internal_rng_state(state);
     for (uint64_t i=0; i<advances; i++){ 
@@ -68,16 +69,16 @@ uint8_t gender_value_from_pid(uint32_t& pid){
     return pid & 0xff;
 }
 
-Gender gender_from_gender_value(uint8_t gender_value, uint8_t threshold){
-    return (gender_value <= threshold) ? Gender::Female : Gender::Male;
+AdvGender gender_from_gender_value(uint8_t gender_value, uint8_t threshold){
+    return (gender_value <= threshold) ? AdvGender::Female : AdvGender::Male;
 }
 
-Nature nature_from_pid(uint32_t& pid){
-    return Nature (pid % 25);
+AdvNature nature_from_pid(uint32_t& pid){
+    return AdvNature (pid % 25);
 }
 
-Ability ability_from_pid(uint32_t& pid){
-    return Ability (pid % 2);
+AdvAbility ability_from_pid(uint32_t& pid){
+    return AdvAbility (pid % 2);
 }
 
 AdvIvGroup iv_group_from_state(uint32_t& state){
@@ -96,29 +97,29 @@ AdvIvGroup iv_group_from_state(uint32_t& state){
 AdvPokemonResult pokemon_from_state(AdvRngState& state){
     uint32_t pid = pid_from_states(state.s0, state.s1);
     uint8_t gender = gender_value_from_pid(pid);
-    Nature nature = nature_from_pid(pid);
-    Ability ability = ability_from_pid(pid);
+    AdvNature nature = nature_from_pid(pid);
+    AdvAbility ability = ability_from_pid(pid);
 
     AdvIvGroup ivgroup1;
     AdvIvGroup ivgroup2;
     switch(state.method){
 
-    case RngMethod::Method2:
+    case AdvRngMethod::Method2:
         ivgroup1 = iv_group_from_state(state.s3);
         ivgroup2 = iv_group_from_state(state.s4);
         break;
-    case RngMethod::Method4:
+    case AdvRngMethod::Method4:
         ivgroup1 = iv_group_from_state(state.s2);
         ivgroup2 = iv_group_from_state(state.s4);
         break;
-    case RngMethod::Method1:
+    case AdvRngMethod::Method1:
     default:
         ivgroup1 = iv_group_from_state(state.s2);
         ivgroup2 = iv_group_from_state(state.s3);
         break;
     }
 
-    IVs ivs;
+    AdvIVs ivs;
     ivs.hp = ivgroup1.iv0;
     ivs.attack = ivgroup1.iv1;
     ivs.defense = ivgroup1.iv2;
@@ -129,17 +130,17 @@ AdvPokemonResult pokemon_from_state(AdvRngState& state){
     return {pid, gender, nature, ability, ivs};
 }
 
-ShinyType shiny_type_from_pid(uint32_t pid, uint16_t tid_xor_sid){
+AdvShinyType shiny_type_from_pid(uint32_t pid, uint16_t tid_xor_sid){
     uint16_t pid0 = pid >> 16;
     uint16_t pid1 = pid & 0xffff;
     uint16_t pid_xor (pid0 ^ pid1);
 
     if (pid_xor == tid_xor_sid){
-        return ShinyType::Square;
+        return AdvShinyType::Square;
     }else if ((pid_xor ^ tid_xor_sid) < 8){
-        return ShinyType::Star;
+        return AdvShinyType::Star;
     }else{
-        return ShinyType::Normal;
+        return AdvShinyType::Normal;
     }
 }
 
@@ -197,21 +198,21 @@ void AdvRngSearcher::search_advance_range(
     for (uint8_t m=0; m<3; m++){
         set_state_advances(min_advances);
 
-        RngMethod method;
+        AdvRngMethod method;
         switch (m){
         case 1:
-            method = RngMethod::Method2;
+            method = AdvRngMethod::Method2;
             break;
         case 2:
-            method = RngMethod::Method4;
+            method = AdvRngMethod::Method4;
             break;
         case 0:
         default:
-            method = RngMethod::Method1;
+            method = AdvRngMethod::Method1;
             break;
         }
 
-        if ((target.method != RngMethod::Any) && (target.method != method)){
+        if ((target.method != AdvRngMethod::Any) && (target.method != method)){
             continue;
         }else{
             state.method = method;

@@ -7,16 +7,16 @@
 #include "CommonFramework/Notifications/ProgramNotifications.h"
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
 
-#include "Story segments/PokemonBDSP_AutoStory_Segment 00.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 01.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 02.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 03.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 04.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 05.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 06.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 07.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 08.h"
-#include "Story segments/PokemonBDSP_AutoStory_Segment 09.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 00.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 01.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 02.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 03.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 04.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 05.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 06.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 07.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 08.h"
+#include "StorySegments/PokemonBDSP_AutoStory_Segment 09.h"
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{

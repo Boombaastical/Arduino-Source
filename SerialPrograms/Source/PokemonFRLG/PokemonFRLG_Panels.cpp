@@ -9,13 +9,12 @@
 #include "PokemonFRLG_Panels.h"
 
 #include "PokemonFRLG_Settings.h"
-
+#include "Programs/Farming/PokemonFRLG_ItemDuplication.h"
 #include "Programs/Farming/PokemonFRLG_LuckyEggFarmer.h"
 #include "Programs/Farming/PokemonFRLG_NuggetBridgeFarmer.h"
 #include "Programs/Farming/PokemonFRLG_PickupFarmer.h"
 #include "Programs/Farming/PokemonFRLG_EvTrainer.h"
 #include "Programs/ShinyHunting/PokemonFRLG_GiftReset.h"
-#include "Programs/ShinyHunting/PokemonFRLG_RngHelper.h"
 #include "Programs/ShinyHunting/PokemonFRLG_LegendaryReset.h"
 #include "Programs/ShinyHunting/PokemonFRLG_LegendaryRunAway.h"
 #include "Programs/ShinyHunting/PokemonFRLG_PrizeCornerReset.h"
