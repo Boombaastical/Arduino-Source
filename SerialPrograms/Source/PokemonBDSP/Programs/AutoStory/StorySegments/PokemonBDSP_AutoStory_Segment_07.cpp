@@ -6,7 +6,7 @@
  */
 
 #include "../PokemonBDSP_AutoStoryTools.h"
-#include "PokemonBDSP_AutoStory_Segment 07.h"
+#include "PokemonBDSP_AutoStory_Segment_07.h"
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{

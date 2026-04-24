@@ -9,7 +9,7 @@
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
 #include "PokemonBDSP/Inference/PokemonBDSP_DialogDetector.h"
 #include "../PokemonBDSP_AutoStoryTools.h"
-#include "PokemonBDSP_AutoStory_Segment 00.h"
+#include "PokemonBDSP_AutoStory_Segment_00.h"
 
 using namespace std::chrono_literals;
 

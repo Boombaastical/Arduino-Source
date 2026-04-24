@@ -45,7 +45,7 @@ void checkpoint_save(
     EventNotificationOption& notif_status_update,
     AutoStoryStats& stats
 ){
-    save_game(env.console, context);
+    save_game(context);
     stats.m_checkpoint++;
     env.update_stats();
     send_program_status_notification(env, notif_status_update, "Saved at checkpoint.");

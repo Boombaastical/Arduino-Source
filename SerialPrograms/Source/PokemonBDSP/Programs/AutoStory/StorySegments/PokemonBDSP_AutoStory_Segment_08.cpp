@@ -7,7 +7,7 @@
 
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
 #include "../PokemonBDSP_AutoStoryTools.h"
-#include "PokemonBDSP_AutoStory_Segment 08.h"
+#include "PokemonBDSP_AutoStory_Segment_08.h"
 
 using namespace std::chrono_literals;
 
