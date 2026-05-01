@@ -7,7 +7,9 @@
 #include "CommonFramework/Exceptions/OperationFailedException.h"
 #include "CommonFramework/Notifications/ProgramNotifications.h"
 #include "CommonTools/Async/InferenceRoutines.h"
+#include "CommonTools/VisualDetectors/BlackScreenDetector.h"
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
+#include "NintendoSwitch/Commands/NintendoSwitch_Commands_Superscalar.h"
 #include "PokemonBDSP/Inference/PokemonBDSP_DialogDetector.h"
 #include "PokemonBDSP/Programs/PokemonBDSP_GameNavigation.h"
 #include "Detect/PokemonBDSP_AutoStory_OverworldDetector.h"
@@ -38,6 +40,18 @@ const char* torterra_move_slug(TorterraMove move){
     return "unknown";
 }
 
+void fake_save_game(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context
+){
+    context.wait_for_all_requests();
+    pbf_press_button(context, BUTTON_X, 80ms, 1000ms);
+    pbf_press_button(context, BUTTON_X, 80ms, 1000ms);
+    pbf_press_button(context, BUTTON_R, 80ms, 1000ms);
+    pbf_mash_button(context, BUTTON_B, 2000ms);
+    context.wait_for_all_requests();
+}
+
 
 void checkpoint_save(
     SingleSwitchProgramEnvironment& env,
@@ -45,7 +59,18 @@ void checkpoint_save(
     EventNotificationOption& notif_status_update,
     AutoStoryStats& stats
 ){
-    save_game(context);
+    fake_save_game(env, context);
+    {
+        OverworldWatcher overworld;
+        int ret = wait_until(env.console, context, std::chrono::seconds(30), {{overworld}});
+        if (ret < 0){
+            OperationFailedException::fire(
+                ErrorReport::SEND_ERROR_REPORT,
+                "checkpoint_save: overworld not detected within 30 seconds.",
+                env.console
+            );
+        }
+    }
     stats.m_checkpoint++;
     env.update_stats();
     send_program_status_notification(env, notif_status_update, "Saved at checkpoint.");
@@ -172,6 +197,43 @@ void repeat_dpad(
     for (size_t i = 0; i < times; i++){
         pbf_press_dpad(context, dir, press, hold);
     }
+}
+
+
+bool heal_pokemon(
+    VideoStream& stream,
+    ProControllerContext& context,
+    const std::string& label
+){
+    context.wait_for_all_requests();
+    pbf_wait(context, 2000ms);
+
+    pbf_move_left_joystick(context, {0, +1}, 1800ms, 100ms); // 7+
+    context.wait_for_all_requests();
+
+    pbf_mash_button(context, BUTTON_A, 5000ms);
+    context.wait_for_all_requests();
+    pbf_wait(context, 3000ms);
+    wait_for_dialogue(stream, context, label + " - Pokemon healing");
+    mash_until_dialogue_ends(stream, context, BUTTON_B);
+    context.wait_for_all_requests();
+    pbf_wait(context, 1000ms);
+
+    // Exiting the Pokemon Center
+    BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& context){
+            pbf_move_left_joystick(context, {0, -1}, 15000ms, 100ms);
+        },
+        {{black_screen}}
+    );
+    if (ret < 0){
+        stream.log("heal_pokemon(" + label + "): black screen not detected", COLOR_RED);
+        return false;
+    }
+
+    return true;
 }
 
 

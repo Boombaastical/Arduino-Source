@@ -5,7 +5,18 @@
  *
  */
 
+#include "CommonFramework/Exceptions/OperationFailedException.h"
+#include "CommonFramework/Globals.h"
+#include "CommonTools/Async/InferenceRoutines.h"
+#include "CommonTools/VisualDetectors/BlackScreenDetector.h"
+#include "CommonTools/VisualDetectors/ImageMatchDetector.h"
+#include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
+#include "NintendoSwitch/Commands/NintendoSwitch_Commands_Superscalar.h"
+#include "PokemonBDSP/Inference/Battles/PokemonBDSP_BattleMenuDetector.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_DialogDetector.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_MarkFinder.h"
 #include "../PokemonBDSP_AutoStoryTools.h"
+#include "../Utils/PokemonBDSP_AutoStory_Battle.h"
 #include "PokemonBDSP_AutoStory_Segment_05.h"
 
 namespace PokemonAutomation{
@@ -48,6 +59,229 @@ void AutoStory_Checkpoint_05::run_checkpoint(
     checkpoint_05(env, context, options, stats);
 }
 
+static bool handle_battle(
+    VideoStream& stream,
+    ProControllerContext& context,
+    const std::string& trainerid
+){
+    context.wait_for_all_requests();
+    pbf_wait(context, 15000ms);
+    pbf_press_button(context, BUTTON_A, 80ms, 300ms);
+    pbf_wait(context, 500ms);
+
+    if (trainerid == "pastoria_clint"){
+        // Select Razor Leaf and mash that
+        pbf_press_dpad(context, DPAD_UP, 280ms, 200ms);
+        BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
+        int ret = run_until<ProControllerContext>(
+            stream, context,
+            [](ProControllerContext& context){
+                pbf_mash_button(context, BUTTON_A, 200000ms);
+            },
+            {{black_screen}}
+        );
+        if (ret < 0){
+            stream.log("handle_battle_pastoria_clint: black screen not detected!", COLOR_RED);
+            return false;
+        }
+        context.wait_for_all_requests();
+        pbf_mash_button(context, BUTTON_B, 2000ms);
+        stream.log("handle_battle_pastoria_clint: transition confirmed.");
+        return true;
+    }
+    return false;
+}
+
+static bool leave_gym(
+    VideoStream& stream,
+    ProControllerContext& context
+){
+    DpadState dpad;
+    context.wait_for_all_requests();
+    pbf_wait(context, 2000ms);
+    context.wait_for_all_requests();
+    stream.log("leave_gym: walking out of gym");
+
+    pbf_move_left_joystick(context, {0, +1}, 400ms, 100ms); // 1+
+    pbf_move_left_joystick(context, {+1, 0}, 600ms, 100ms); // 2+
+    pbf_move_left_joystick(context, {0, +1}, 600ms, 100ms); // 2+
+    pbf_move_left_joystick(context, {+1, 0}, 2000ms, 100ms); // 10+
+    pbf_move_left_joystick(context, {0, -1}, 6000ms, 100ms); // 34+
+    pbf_move_left_joystick(context, {-1, 0}, 1800ms, 100ms); // 9+
+    pbf_move_left_joystick(context, {0, -1}, 1000ms, 100ms); // 5+
+    dpad.last_dir = DPAD_DOWN;
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 3);
+    BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& context){
+            pbf_move_left_joystick(context, {0, -1}, 100000ms, 100ms);
+        },
+        {{black_screen}}
+    );
+    if (ret < 0){
+        stream.log("leave_gym: Didn't enter building!", COLOR_RED);
+        return false;
+    }
+    stream.log("leave_gym: transition confirmed.");
+    return true;
+}
+
+static bool go_to_pastoria_pokemon_center(
+    VideoStream& stream,
+    ProControllerContext& context
+){
+    DpadState dpad;
+    context.wait_for_all_requests();
+    pbf_wait(context, 2000ms);
+    context.wait_for_all_requests();
+    stream.log("go_to_pastoria_pokemon_center: going to pokemon center");
+
+    pbf_move_left_joystick(context, {+1, 0}, 900ms, 100ms); // 6
+    pbf_move_left_joystick(context, {0, +1}, 2400ms, 100ms); // 12+
+    pbf_move_left_joystick(context, {-1, 0}, 800ms, 100ms); // 3+
+    dpad.last_dir = DPAD_LEFT;
+    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 7);
+
+    BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
+        int ret1 = run_until<ProControllerContext>(
+            stream, context,
+            [](ProControllerContext& context){
+                pbf_move_left_joystick(context, {0, +1}, 20000ms, 100ms);
+            },
+            {{black_screen}}
+        );
+        if (ret1 < 0){
+            stream.log("go_to_pastoria_pokemon_centert: Didn't detect transition!", COLOR_RED);
+            return false;
+        }
+        stream.log("go_to_pastoria_pokemon_center: transition confirmed.");
+    return true;
+}
+
+static bool exit_pastoria_pokemon_center(
+    VideoStream& stream,
+    ProControllerContext& context
+){
+    return heal_pokemon(stream, context, "Pastoria");
+}
+
+static bool pastoria_city_drama(
+    VideoStream& stream,
+    ProControllerContext& context
+){
+    DpadState dpad;
+    context.wait_for_all_requests();
+    pbf_wait(context, 2000ms);
+    context.wait_for_all_requests();
+    stream.log("pastoria_city_drama: starting the drama");
+
+    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 2);
+    pbf_move_left_joystick(context, {+1, 0}, 1600ms, 100ms); // 10
+    pbf_move_left_joystick(context, {0, +1}, 500ms, 100ms); // 3
+    pbf_move_left_joystick(context, {+1, 0}, 1000ms, 100ms); // 7
+    pbf_move_left_joystick(context, {0, +1}, 1400ms, 100ms); // 7+
+    pbf_move_left_joystick(context, {-1, 0}, 800ms, 100ms); // 2+
+
+    context.wait_for_all_requests();
+
+    ShortDialogWatcher talk_to_grunt_1(COLOR_BLUE);
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& context){
+            pbf_mash_button(context, BUTTON_A, 2000ms);
+        },
+        {{talk_to_grunt_1}}
+    );
+    if (ret < 0) {
+        stream.log("pastoria_city_drama_talk_to_grunt_1: dialog box not detected!", COLOR_RED);
+    }
+    if (ret == 0){
+        stream.log("pastoria_city_drama_talk_to_grunt_1: talking to grunt!");
+        pbf_mash_button(context, BUTTON_B, 8000ms);
+    };
+
+    context.wait_for_all_requests();
+    pbf_wait(context, 2000ms);
+
+    pbf_move_left_joystick(context, {+1, 0}, 4800ms, 100ms); // 24+
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 2);
+    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 1);
+
+    ShortDialogWatcher talk_to_grunt_2(COLOR_BLUE);
+    ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& context){
+            pbf_mash_button(context, BUTTON_A, 2000ms);
+        },
+        {{talk_to_grunt_1}}
+    );
+    if (ret < 0) {
+        stream.log("pastoria_city_drama_talk_to_grunt_2: dialog box not detected!", COLOR_RED);
+    }
+    if (ret == 0){
+        stream.log("pastoria_city_drama_talk_to_grunt_2: talking to grunt!");
+        
+        BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
+        int ret1 = run_until<ProControllerContext>(
+            stream, context,
+            [](ProControllerContext& context){
+                pbf_mash_button(context, BUTTON_B, 200000ms);
+            },
+            {{black_screen}}
+        );
+        if (ret1 < 0){
+            stream.log("pastoria_city_drama_talk_to_clint: Didn't detect start of battle with Clint!", COLOR_RED);
+            return false;
+        }
+        stream.log("pastoria_city_drama_talk_to_clint: battling Clint.");
+        handle_battle(stream, context, "pastoria_clint");
+        pbf_mash_button(context, BUTTON_B, 3000ms);
+    };
+
+    context.wait_for_all_requests();
+    pbf_wait(context, 3000ms);
+    
+    dpad.last_dir = DPAD_LEFT;
+    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 1);
+
+    BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
+    ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& context){
+            pbf_move_left_joystick(context, {+1, 0}, 10000ms, 100ms);
+        },
+        {{black_screen}}
+    );
+    if (ret < 0){
+        stream.log("pastoria_city_drama: transition not detected!", COLOR_RED);
+        return false;
+    }
+    stream.log("pastoria_city_drama: transition detected.");
+    return true;
+}
+
+static bool go_through_house_east_pastoria(
+    VideoStream& stream,
+    ProControllerContext& context
+){
+    stream.log("Going through the building at the entrance of Pastoria city");
+    BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
+    int ret = run_until<ProControllerContext>(
+        stream, context,
+        [](ProControllerContext& context){
+            pbf_move_left_joystick(context, {+1, 0}, 100000ms, 100ms);
+        },
+        {{black_screen}}
+    );
+    if (ret < 0){
+        stream.log("go_through_house_east_pastoria: Didn't exit building!", COLOR_RED);
+        return false;
+    }
+    stream.log("go_through_house_east_pastoria: transition confirmed.");
+
+    return true;
+}
 
 void checkpoint_05(
     SingleSwitchProgramEnvironment& env,
@@ -57,7 +291,22 @@ void checkpoint_05(
 ){
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/){
-            // TODO: implement Segment 05 gameplay logic
+            if (!leave_gym(env.console, context)){
+                OperationFailedException::fire(ErrorReport::SEND_ERROR_REPORT, "leave_gym: transition not detected.", env.console);
+            }
+            if (!go_to_pastoria_pokemon_center(env.console, context)){
+                OperationFailedException::fire(ErrorReport::SEND_ERROR_REPORT, "go_to_pastoria_pokemon_center: transition not detected.", env.console);
+            }
+            if (!exit_pastoria_pokemon_center(env.console, context)){
+                OperationFailedException::fire(ErrorReport::SEND_ERROR_REPORT, "exit_pastoria_pokemon_center: transition not detected.", env.console);
+            }
+            if (!pastoria_city_drama(env.console, context)){
+                OperationFailedException::fire(ErrorReport::SEND_ERROR_REPORT, "pastoria_city_drama: transition not detected.", env.console);
+            }
+            if (!go_through_house_east_pastoria(env.console, context)){
+                OperationFailedException::fire(ErrorReport::SEND_ERROR_REPORT, "go_through_house_east_pastoria: transition not detected.", env.console);
+            }
+            
         }
     );
 }

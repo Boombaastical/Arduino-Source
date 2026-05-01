@@ -131,6 +131,12 @@ public:
 //  Shared utility functions (implementations in .cpp)
 // ---------------------------------------------------------------------------
 
+// Fake save game to be replaced with save_game when program runs smoothly
+void checkpoint_save(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context
+);
+
 //  Save the game from the overworld, increment the checkpoint counter,
 //  update stats display, and send a status notification.
 void checkpoint_save(
@@ -189,6 +195,22 @@ void mash_until_dialogue_ends(
     ProControllerContext& context,
     Button button = BUTTON_B,
     Milliseconds timeout = std::chrono::seconds(60)
+);
+
+//  Open the bag, navigate to the repel compartment tab, and use a repel.
+//  Returns false if the repel compartment tab could not be found.
+bool activate_repel(
+    VideoStream& stream,
+    ProControllerContext& context
+);
+
+//  Walk to the nurse, heal the party, and exit the Pokemon Center.
+//  `label` names the center for log messages (e.g. "Veilstone").
+//  Returns false if the exit black screen was not detected.
+bool heal_pokemon(
+    VideoStream& stream,
+    ProControllerContext& context,
+    const std::string& label
 );
 
 
