@@ -28,28 +28,28 @@ void AutoStory_Segment_01::run_segment(
     context.wait_for_all_requests();
     env.console.log("Start Segment " + name(), COLOR_ORANGE);
 
-    AutoStory_Checkpoint_01().run_checkpoint(env, context, options, stats);
+    AutoStory_Checkpoint_20().run_checkpoint(env, context, options, stats);
 
     context.wait_for_all_requests();
     env.console.log("End Segment " + name(), COLOR_GREEN);
 }
 
 
-std::string AutoStory_Checkpoint_01::name()       const{ return "001 - " + AutoStory_Segment_01().name(); }
-std::string AutoStory_Checkpoint_01::start_text() const{ return "Starter Pokemon chosen and received."; }
-std::string AutoStory_Checkpoint_01::end_text()   const{ return "First Gym Badge acquired (Oreburgh City)."; }
+std::string AutoStory_Checkpoint_20::name()       const{ return "001 - " + AutoStory_Segment_01().name(); }
+std::string AutoStory_Checkpoint_20::start_text() const{ return "Starter Pokemon chosen and received."; }
+std::string AutoStory_Checkpoint_20::end_text()   const{ return "First Gym Badge acquired (Oreburgh City)."; }
 
-void AutoStory_Checkpoint_01::run_checkpoint(
+void AutoStory_Checkpoint_20::run_checkpoint(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
     AutoStoryStats& stats
 ) const{
-    checkpoint_01(env, context, options, stats);
+    Checkpoint_20(env, context, options, stats);
 }
 
 
-void checkpoint_01(
+void Checkpoint_20(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,

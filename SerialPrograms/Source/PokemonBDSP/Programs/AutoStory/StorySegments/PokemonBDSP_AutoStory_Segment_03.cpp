@@ -28,28 +28,28 @@ void AutoStory_Segment_03::run_segment(
     context.wait_for_all_requests();
     env.console.log("Start Segment " + name(), COLOR_ORANGE);
 
-    AutoStory_Checkpoint_03().run_checkpoint(env, context, options, stats);
+    AutoStory_Checkpoint_22().run_checkpoint(env, context, options, stats);
 
     context.wait_for_all_requests();
     env.console.log("End Segment " + name(), COLOR_GREEN);
 }
 
 
-std::string AutoStory_Checkpoint_03::name()       const{ return "003 - " + AutoStory_Segment_03().name(); }
-std::string AutoStory_Checkpoint_03::start_text() const{ return "Second Gym Badge acquired (Eterna City)."; }
-std::string AutoStory_Checkpoint_03::end_text()   const{ return "Third Gym Badge acquired (Hearthome City)."; }
+std::string AutoStory_Checkpoint_22::name()       const{ return "003 - " + AutoStory_Segment_03().name(); }
+std::string AutoStory_Checkpoint_22::start_text() const{ return "Second Gym Badge acquired (Eterna City)."; }
+std::string AutoStory_Checkpoint_22::end_text()   const{ return "Third Gym Badge acquired (Hearthome City)."; }
 
-void AutoStory_Checkpoint_03::run_checkpoint(
+void AutoStory_Checkpoint_22::run_checkpoint(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
     AutoStoryStats& stats
 ) const{
-    checkpoint_03(env, context, options, stats);
+    Checkpoint_22(env, context, options, stats);
 }
 
 
-void checkpoint_03(
+void Checkpoint_22(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,

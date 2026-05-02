@@ -28,7 +28,7 @@ public:
     ) const override;
 };
 
-class AutoStory_Checkpoint_00 : public AutoStory_Checkpoint{
+class AutoStory_Checkpoint_000 : public AutoStory_Checkpoint{
 public:
     virtual std::string name()       const override;
     virtual std::string start_text() const override;
@@ -41,15 +41,84 @@ public:
     ) const override;
 };
 
-// start: game launched, standing at beginning cinematic
-// end:   starter Pokemon chosen and received
-void checkpoint_00(
+class AutoStory_Checkpoint_001 : public AutoStory_Checkpoint{
+public:
+    virtual std::string name() const override;
+    virtual std::string start_text() const override;
+    virtual std::string end_text() const override;
+    virtual void run_checkpoint(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) const override;
+};
+
+class AutoStory_Checkpoint_002 : public AutoStory_Checkpoint{
+public:
+    virtual std::string name() const override;
+    virtual std::string start_text() const override;
+    virtual std::string end_text() const override;
+    virtual void run_checkpoint(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) const override;
+};
+
+class AutoStory_Checkpoint_003 : public AutoStory_Checkpoint{
+public:
+    virtual std::string name() const override;
+    virtual std::string start_text() const override;
+    virtual std::string end_text() const override;
+    virtual void run_checkpoint(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) const override;
+};
+
+// start: game launched, in front of the TV.
+// end:   Standing outside lake varety before starter
+//Segment 00-00 begins
+void checkpoint_000(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        EventNotificationOption& notif_status_update,
+        AutoStoryStats& stats
+);
+
+// start: Standing outside lake varety before starter
+// end:   Standing outside lake varety after starter battle
+//Segment 00-001 begins
+void checkpoint_001(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
-    AutoStoryOptions options,
+    EventNotificationOption& notif_status_update,
     AutoStoryStats& stats
 );
 
+// start: Standing outside lake varety after starter battle
+// end:   recieved Pokedex, standing in front of the professor
+//Segment 00-002 begins
+void checkpoint_002(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    EventNotificationOption& notif_status_update,
+    AutoStoryStats& stats
+);
+
+// start: recieved Pokedex, standing in front of the professor
+// end:   recieved Poketech, standing in front of the professor
+//Segment 00-003 begins
+void checkpoint_003(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    EventNotificationOption& notif_status_update,
+    AutoStoryStats& stats
+);
 
 }
 }
