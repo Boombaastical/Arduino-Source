@@ -693,7 +693,7 @@ static bool go_through_building_route_213(
         stream.log("go_through_building_route_214: Didn't exit building!", COLOR_RED);
         return false;
     }
-    stream.log("pass_by_valor_lakefront: transition confirmed.");
+    stream.log("go_through_building_route_214: transition confirmed.");
 
     return true;
 }
