@@ -26,7 +26,7 @@ static void gym_Puzzle_01(VideoStream& stream, ProControllerContext& context){
 
     //Upon entering the Gym.
 
-    for(int i=0; i < 3; i++){
+   /* for(int i=0; i < 3; i++){
         pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
     }
 
@@ -52,6 +52,27 @@ static void gym_Puzzle_01(VideoStream& stream, ProControllerContext& context){
 
     for(int i=0; i < 4; i++){
         pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
+    }*/
+
+    struct Move {
+    DpadPosition dir;
+    int count;
+    };
+
+    const Move sequence[] = {
+    {DPAD_UP, 3},
+    {DPAD_LEFT, 4},
+    {DPAD_UP, 5},
+    {DPAD_RIGHT, 8},
+    {DPAD_UP, 11},
+    {DPAD_LEFT, 5},
+    {DPAD_UP, 4},
+    };
+
+    for (const auto& move : sequence){
+        for (int i = 0; i < move.count; i++){
+            pbf_press_dpad(context, move.dir, 80ms, 300ms);
+        }
     }
 
     //Button presses to initiate the Gym battle.
