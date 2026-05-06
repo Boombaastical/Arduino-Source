@@ -26,37 +26,9 @@ static void gym_Puzzle_01(VideoStream& stream, ProControllerContext& context){
 
     //Upon entering the Gym.
 
-   /* for(int i=0; i < 3; i++){
-        pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-    }
-
-    for(int i=0; i < 4; i++){
-        pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-    }
-
-    for(int i=0; i < 5; i++){
-        pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-    }
-
-    for(int i=0; i < 8; i++){
-        pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
-    }
-
-    for(int i=0; i < 11; i++){
-        pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-    }
-
-    for(int i=0; i < 5; i++){
-        pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-    }
-
-    for(int i=0; i < 4; i++){
-        pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-    }*/
-
     struct Move {
-    DpadPosition dir;
-    int count;
+        DpadPosition dir;
+        int count;
     };
 
     const Move sequence[] = {
