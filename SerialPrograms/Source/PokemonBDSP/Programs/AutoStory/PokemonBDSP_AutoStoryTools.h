@@ -174,7 +174,8 @@ void repeat_dpad(
     DpadPosition dir,
     Milliseconds press,
     Milliseconds hold,
-    size_t times
+    size_t times,
+    bool include_last_dir = true
 );
 
 //  Wait (without pressing any buttons) until a short dialogue box appears.
@@ -211,6 +212,15 @@ bool heal_pokemon(
     VideoStream& stream,
     ProControllerContext& context,
     const std::string& label
+);
+
+// Open the map, move the cursor to either bottom left, bottom right or
+// top left, then move the cursor a number of steps, then checks for
+// correctness, and mashes A until a black screen is detected
+bool fly_to(
+    VideoStream& stream,
+    ProControllerContext& context,
+    const std::string& place
 );
 
 

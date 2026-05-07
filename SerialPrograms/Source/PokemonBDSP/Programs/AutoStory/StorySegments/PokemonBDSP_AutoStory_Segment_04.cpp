@@ -273,7 +273,7 @@ static bool go_to_veilstone_pokemon_center(
     pbf_move_left_joystick(context, {0, +1}, 800ms, 100ms); // 5
     pbf_move_left_joystick(context, {+1, 0}, 1400ms, 100ms); // 8+
     dpad.last_dir = DPAD_RIGHT;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 2);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 2, true);
     context.wait_for_all_requests();
 
     /* Entering the Pokemon Center */
@@ -350,7 +350,7 @@ static bool enter_galactic_warehouse(
 
     pbf_move_left_joystick(context, {+1, 0}, 1200ms, 100ms); // 6+
     dpad.last_dir = DPAD_RIGHT;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 1);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 1, true);
 
     context.wait_for_all_requests();
     
@@ -381,7 +381,7 @@ static bool exit_galactic_warehouse(
     pbf_move_left_joystick(context, {+1, 0}, 1600ms, 100ms); // 7+
     pbf_move_left_joystick(context, {0, +1}, 400ms, 100ms); // 2+
     dpad.last_dir = DPAD_UP;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 2);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 2, true);
     pbf_move_left_joystick(context, {0, +1}, 400ms, 100ms); // 2+
     context.wait_for_all_requests();
     // Get fly
@@ -407,7 +407,7 @@ static bool exit_galactic_warehouse(
 
     pbf_move_left_joystick(context, {0, -1}, 1600ms, 100ms); // 5+
     dpad.last_dir = DPAD_DOWN;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 5);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 5, true);
     
     // Black screen detector here when exiting the warehouse
     BlackScreenOverWatcher black_screen_2(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
@@ -439,14 +439,14 @@ static bool go_to_route_214(
     pbf_move_left_joystick(context, {0, -1}, 3000ms, 100ms); // 13+
     pbf_move_left_joystick(context, {+1, 0}, 3000ms, 100ms); // 15+
     dpad.last_dir = DPAD_RIGHT;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 4);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 4, true);
 
     pbf_move_left_joystick(context, {0, -1}, 2600ms, 100ms); // 14
     pbf_move_left_joystick(context, {-1, 0}, 1200ms, 100ms); // 6+
     pbf_move_left_joystick(context, {0, -1}, 2000ms, 100ms); // 10+
     pbf_move_left_joystick(context, {+1, 0}, 1400ms, 100ms); // 7+
 
-    repeat_dpad(context, dpad, DPAD_UP, 80ms, 300ms, 3);
+    repeat_dpad(context, dpad, DPAD_UP, 80ms, 300ms, 3, true);
 
     pbf_move_left_joystick(context, {+1, 0}, 2200ms, 100ms); // 15
     context.wait_for_all_requests();
@@ -513,7 +513,7 @@ static bool walk_through_route_214(
     pbf_move_left_joystick(context, {0, -1}, 600ms, 100ms); // 4
     pbf_move_left_joystick(context, {+1, 0}, 3000ms, 100ms); // 13+
     dpad.last_dir = DPAD_RIGHT;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 3);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 3, true);
 
     activate_repel(stream, context);
 
@@ -547,15 +547,15 @@ static bool walk_through_route_214(
     pbf_wait(context, 3000ms);
 
     dpad.last_dir = DPAD_DOWN;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 1);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 1, true);
     pbf_move_left_joystick(context, {0, -1}, 1200ms, 100ms); // 6+
     pbf_move_left_joystick(context, {-1, 0}, 400ms, 100ms); // 2
     pbf_move_left_joystick(context, {0, -1}, 1000ms, 100ms); // 5+
 
     pbf_move_left_joystick(context, {+1, 0}, 1600ms, 100ms); // 8+
     dpad.last_dir = DPAD_RIGHT;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 1);
-    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 6);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 1, true);
+    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 6, true);
 
     {
         MarkDetector battle_dialogue_2(stream.overlay(), {0.1, 0.0, 0.8, 0.9});
@@ -590,12 +590,12 @@ static bool walk_through_route_214(
     pbf_move_left_joystick(context, {0, -1}, 1000ms, 100ms); // 6+
     
     dpad.last_dir = DPAD_DOWN;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 1);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 1, true);
     pbf_move_left_joystick(context, {0, -1}, 2200ms, 100ms); // 11+
 
     pbf_move_left_joystick(context, {-1, 0}, 800ms, 100ms); // 4+
     pbf_move_left_joystick(context, {0, -1}, 600ms, 100ms); // 3+
-    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 2);
+    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 2, true);
 
     pbf_move_left_joystick(context, {0, -1}, 6200ms, 100ms); // 31+
 
@@ -620,8 +620,8 @@ static bool pass_by_valor_lakefront(
                 DpadState dpad;
                 dpad.last_dir = DPAD_DOWN;
                 for (int c = 0; c < 20; c++){
-                    repeat_dpad(context, dpad, DPAD_UP, 80ms, 300ms, 1);
-                    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 1);
+                    repeat_dpad(context, dpad, DPAD_UP, 80ms, 300ms, 1, true);
+                    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 1, true);
                 }
             },
             {{repel_ran_out}}
@@ -633,14 +633,14 @@ static bool pass_by_valor_lakefront(
     context.wait_for_all_requests();
     pbf_move_left_joystick(context, {0, -1}, 1000ms, 100ms); // 20+
     dpad.last_dir = DPAD_UP;
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 6);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 6, true);
     
     pbf_move_left_joystick(context, {0, -1}, 8000ms, 100ms); // 41+
     pbf_move_left_joystick(context, {-1, 0}, 600ms, 100ms); // 4
     pbf_move_left_joystick(context, {0, -1}, 800ms, 100ms); // 5
     pbf_move_left_joystick(context, {-1, 0}, 2200ms, 100ms); // 10+
     pbf_move_left_joystick(context, {0, -1}, 800ms, 100ms); // 4+
-    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 4);
+    repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 4, true);
     context.wait_for_all_requests();
 
     BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
@@ -707,7 +707,7 @@ static bool go_through_route_213(
     pbf_wait(context, 2000ms);
     DpadState dpad;
 
-    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 4);
+    repeat_dpad(context, dpad, DPAD_DOWN, 80ms, 300ms, 4, true);
     
     MarkDetector tuber_chelsea_fight(stream.overlay(), {0.1, 0.0, 0.8, 0.9});
     int ret = run_until<ProControllerContext>(
@@ -894,7 +894,7 @@ static bool go_through_pastoria(
     pbf_move_left_joystick(context, {-1, 0}, 3400ms, 100ms); // 19
 
     dpad.last_dir = DPAD_LEFT;
-    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 8);
+    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 8, true);
 
     BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
     ret = run_until<ProControllerContext>(
@@ -927,7 +927,7 @@ static bool go_to_pastoria_gym(
     pbf_move_left_joystick(context, {0, -1}, 1200ms, 100ms); // 8
     pbf_move_left_joystick(context, {-1, 0}, 2000ms, 100ms); // 10+
     dpad.last_dir = DPAD_LEFT;
-    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 3);
+    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 3, true);
 
     BlackScreenOverWatcher black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
     int ret = run_until<ProControllerContext>(

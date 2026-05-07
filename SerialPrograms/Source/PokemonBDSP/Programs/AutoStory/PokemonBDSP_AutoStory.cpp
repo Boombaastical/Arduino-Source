@@ -391,8 +391,7 @@ bool activate_repel(
     pbf_press_button(context, BUTTON_B, 80ms, 300ms);
     pbf_wait(context, 1000ms);
     pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-    dpad.last_dir = DPAD_RIGHT;
-    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 2);
+    repeat_dpad(context, dpad, DPAD_RIGHT, 80ms, 300ms, 2, false);
     pbf_press_button(context, BUTTON_A, 80ms, 300ms);
     context.wait_for_all_requests();
 
@@ -402,9 +401,7 @@ bool activate_repel(
             RESOURCE_PATH() + "PokemonBDSP/AutoStory/Bag_RepelTab.png"
         );
 
-        // TODO: fill in the box {x, y, w, h} covering the bag tab strip on screen.
         const ImageFloatBox repel_tab_box{0.735000, 0.055000, 0.045000, 0.080000};
-        // TODO: fill in the RMSD tolerance (start around 50.0 and tune from logs).
         const double repel_tab_rmsd = 50.0;
 
         // BDSP bag has 8 compartment tabs; check before each press so zero-press
