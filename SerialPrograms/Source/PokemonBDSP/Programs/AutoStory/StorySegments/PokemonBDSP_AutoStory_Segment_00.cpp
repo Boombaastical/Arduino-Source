@@ -44,184 +44,671 @@ namespace PokemonAutomation {
     namespace NintendoSwitch {
         namespace PokemonBDSP {
 
-        static void set_switch_date_june9_1830(ProControllerContext& context){
-            // Open HOME menu
-            pbf_press_button(context, BUTTON_HOME, 80ms, 160ms);
-            pbf_wait(context, 1200ms);
+//Helper functions for the entire segment. These are not meant to be used outside of 
+//this segment and are not guaranteed to work properly if used elsewhere. They may 
+// also be modified or removed without warning.
 
-            // Navigate to System Settings (gear icon)
-            // Assumes default HOME layout
-            pbf_press_dpad(context, DPAD_DOWN, 20ms, 100ms);
-            pbf_press_dpad(context, DPAD_RIGHT, 20ms, 100ms);
-            pbf_press_dpad(context, DPAD_RIGHT, 20ms, 100ms);
-            pbf_press_dpad(context, DPAD_RIGHT, 20ms, 100ms);
-            pbf_press_dpad(context, DPAD_RIGHT, 20ms, 100ms);
-            pbf_press_dpad(context, DPAD_RIGHT, 20ms, 100ms);
+    //  Helper function to set time quickly by navigating through the system menu.
+        static void set_time_fast(
+            SingleSwitchProgramEnvironment& env,
+            ProControllerContext& context,
+            const DateTime& target
+        ){
+            env.log("[AutoStory] Fast date set starting...", COLOR_ORANGE);
 
-            pbf_press_button(context, BUTTON_A, 80ms, 1200ms);
+            // 1) Home
+            NintendoSwitch::go_home(env.console, context);
 
-            // Scroll down to "System"
-            for (int i = 0; i < 20; i++){
-                pbf_press_dpad(context, DPAD_DOWN, 20ms, 50ms);
-            }
-            pbf_press_button(context, BUTTON_A, 80ms, 800ms);
+            // 2) Navigate to Date/Time settings quickly.
+            NintendoSwitch::home_to_date_time(env.console, context, true);
 
-            // Enter "Date and Time"
-            pbf_press_dpad(context, DPAD_DOWN, 20ms, 100ms);
-            pbf_press_button(context, BUTTON_A, 80ms, 800ms);
+            // 3) Enter date editor.
+            pbf_press_button(context, BUTTON_A, 80ms, 240ms);
 
-            // Disable "Synchronize Clock via Internet"
-            pbf_press_button(context, BUTTON_A, 80ms, 800ms);
-
-            // Enter "Date and Time" edit screen
-            pbf_press_dpad(context, DPAD_DOWN, 20ms, 100ms);
-            pbf_press_button(context, BUTTON_A, 80ms, 800ms);
-
-            // ----------------------------
-            // Set Month → June
-            // ----------------------------
-            // Assumes cursor starts on Month
-            // Move to June (6)
-            for (int i = 0; i < 5; i++){
-                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 50ms);
+            // 4) Wait for date screen and set exact time.
+            NintendoSwitch::DateChangeWatcher date_reader(env.console);
+            int ret = wait_until(
+                env.console, context, 10s,
+                {date_reader}
+            );
+            if (ret < 0){
+                OperationFailedException::fire(
+                    ErrorReport::SEND_ERROR_REPORT,
+                    "Failed to enter Date Change screen.",
+                    env.console
+                );
             }
 
-            // Move to Day field
-            pbf_press_dpad(context, DPAD_DOWN, 20ms, 100ms);
-
-            // ----------------------------
-            // Set Day → 9
-            // ----------------------------
-            for (int i = 0; i < 8; i++){
-                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 50ms);
+            {
+                VideoOverlaySet overlays(env.console.overlay());
+                date_reader.make_overlays(overlays);
+                date_reader.set_date(env.program_info(), env.console, context, target);
             }
 
-            // Move to Hour field
-            pbf_press_dpad(context, DPAD_DOWN, 20ms, 100ms);
+            // 5) Commit date.
+            pbf_press_button(context, BUTTON_A, 160ms, 240ms);
 
-            // ----------------------------
-            // Set Hour → 18
-            // ----------------------------
-            for (int i = 0; i < 18; i++){
-                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 50ms);
-            }
+            // 6) Back to game.
+            pbf_press_button(
+                context, BUTTON_HOME, 160ms,
+                ConsoleSettings::instance().SETTINGS_TO_HOME_DELAY0
+            );
+            NintendoSwitch::resume_game_from_home(env.console, context, false);
 
-            // Move to Minute field
-            pbf_press_dpad(context, DPAD_DOWN, 20ms, 100ms);
-
-            // ----------------------------
-            // Set Minute → 30
-            // ----------------------------
-            for (int i = 0; i < 30; i++){
-                pbf_press_dpad(context, DPAD_RIGHT, 20ms, 50ms);
-            }
-
-            // Confirm date/time
-            pbf_press_button(context, BUTTON_A, 80ms, 1000ms);
-
-            // Exit back to game
-            pbf_press_button(context, BUTTON_HOME, 80ms, 1000ms);
-            pbf_press_button(context, BUTTON_HOME, 80ms, 1000ms);
+            context.wait_for_all_requests();
+            context.wait_for(500ms);
         }
+    // ---------------------------------------------------------------------------
+    // Starter selection
+    // ---------------------------------------------------------------------------
+
+        static void select_turtwig(VideoStream& stream, ProControllerContext& context) {
+            stream.log("[DEBUG] Turtwig Selection: Starting starter selection");
+
+            pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
+            context.wait_for_all_requests();
+
+            ShortDialogWatcher watcher(COLOR_CYAN);
+            int ret = run_until<ProControllerContext>(
+                stream, context,
+                [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
+                { watcher }
+            );
+            if (ret != 0) {
+                ShortDialogWatcher watcher_red(COLOR_RED);
+                ret = run_until<ProControllerContext>(
+                    stream, context,
+                    [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
+                    { watcher_red }
+                );
+            }
+            stream.log(ret == 0 ? "[DEBUG] Turtwig Selection: Confirmation dialogue detected"
+                : "[WARNING] Turtwig Selection: Dialogue detection failed, proceeding anyway");
+
+            pbf_wait(context, 400ms);
+            pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
+            pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
+            context.wait_for_all_requests();
+            stream.log("[DEBUG] Turtwig Selection: Selection complete");
+        }
+
+        static void select_chimchar(VideoStream& stream, ProControllerContext& context) {
+            stream.log("[DEBUG] Chimchar Selection: Starting starter selection");
+
+            pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
+            pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
+            context.wait_for_all_requests();
+
+            ShortDialogWatcher watcher(COLOR_CYAN);
+            int ret = run_until<ProControllerContext>(
+                stream, context,
+                [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
+                { watcher }
+            );
+            if (ret != 0) {
+                ShortDialogWatcher watcher_red(COLOR_RED);
+                ret = run_until<ProControllerContext>(
+                    stream, context,
+                    [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
+                    { watcher_red }
+                );
+            }
+            stream.log(ret == 0 ? "[DEBUG] Chimchar Selection: Confirmation dialogue detected"
+                : "[WARNING] Chimchar Selection: Dialogue detection failed, proceeding anyway");
+
+            pbf_wait(context, 400ms);
+            pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
+            pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
+            context.wait_for_all_requests();
+            stream.log("[DEBUG] Chimchar Selection: Selection complete");
+        }
+
+        static void select_piplup(VideoStream& stream, ProControllerContext& context) {
+            stream.log("[DEBUG] Piplup Selection: Starting starter selection");
+
+            pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
+            pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
+            pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
+            context.wait_for_all_requests();
+
+            ShortDialogWatcher watcher(COLOR_CYAN);
+            int ret = run_until<ProControllerContext>(
+                stream, context,
+                [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
+                { watcher }
+            );
+            if (ret != 0) {
+                ShortDialogWatcher watcher_red(COLOR_RED);
+                ret = run_until<ProControllerContext>(
+                    stream, context,
+                    [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
+                    { watcher_red }
+                );
+            }
+            stream.log(ret == 0 ? "[DEBUG] Piplup Selection: Confirmation dialogue detected"
+                : "[WARNING] Piplup Selection: Dialogue detection failed, proceeding anyway");
+
+            pbf_wait(context, 400ms);
+            pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
+            pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
+            context.wait_for_all_requests();
+            stream.log("[DEBUG] Piplup Selection: Selection complete");
+        }
+
+    // ---------------------------------------------------------------------------
+    // Fight the starter battle. This is mostly mashing A and waiting, but we have 
+    // to be careful to wait for the right amount of time at each stage to avoid desyncs.
+    // ---------------------------------------------------------------------------
+        static void fight_starly(VideoStream& stream, ProControllerContext& context) {
+            stream.log("Starting Starly battle...");
+
+            // Give time for battle transition
+            pbf_wait(context, 5000ms);
+
+            // Mash A to get through intro dialogue
+            pbf_mash_button(context, BUTTON_A, 5000ms);
+
+            // Use first move repeatedly (Tackle/Scratch/Pound)
+            for (int i = 0; i < 6; i++) {
+                pbf_press_button(context, BUTTON_A, 100ms, 2000ms); // Select move
+                pbf_wait(context, 3000ms); // Wait for animation + damage
+            }
+
+            // Mash through faint + post-battle dialogue
+            pbf_mash_button(context, BUTTON_A, 8000ms);
+
+            stream.log("Starly battle complete.");
+
+            wait_for_dialogue(stream, context, "Phase 9 (post battle text)");
+
+            pbf_mash_button(context, BUTTON_B, 20000ms);
+
+            wait_for_dialogue(stream, context, "Phase 9 (post battle text)");
+
+            pbf_mash_button(context, BUTTON_B, 5000ms);
+
+            context.wait_for_all_requests();
+
+
+        }
+
+    // ---------------------------------------------------------------------------
+    // Helper function for 1st grass patch
+    // ---------------------------------------------------------------------------
+        class BattleDialogWatcher : public DetectorToFinder<BattleDialogDetector> {
+        public:
+            BattleDialogWatcher(Color color = COLOR_RED)
+                : DetectorToFinder("BattleDialogWatcher", std::chrono::milliseconds(250), color)
+            {
+            }
+        };
+        static void walk_right_until_on_path(VideoStream& stream, ProControllerContext& context) {
+
+            BlackScreenWatcher battle_start;
+            BattleMenuWatcher battle_menu(BattleType::STANDARD, COLOR_YELLOW);
+            BattleDialogWatcher battle_dialog(COLOR_YELLOW);
+
+            for (size_t step = 0; step < 20; step++) {
+
+                context.wait_for_all_requests();
+
+                // Move right (fixed step)
+                pbf_move_left_joystick(context, { +1, 0 }, 200ms, 0ms);
+
+                context.wait_for_all_requests();
+
+                // Check for battle after movement
+                int battle_ret = wait_until(
+                    stream, context,
+                    2500ms,
+                    {
+                        {battle_start},  // 0
+                        {battle_menu},   // 1
+                        {battle_dialog}, // 2
+                    }
+                    );
+
+                if (battle_ret >= 0) {
+                    stream.log(
+                        "[AutoStory] battle detected during movement. ret = " + std::to_string(battle_ret),
+                        COLOR_ORANGE
+                    );
+
+                    bool escaped = false;
+                    auto deadline = std::chrono::steady_clock::now() + 30s;
+
+                    while (std::chrono::steady_clock::now() < deadline) {
+                        // Spam escape inputs
+                        pbf_press_button(context, BUTTON_B, 40ms, 120ms);
+                        context.wait_for_all_requests();
+
+                        pbf_move_left_joystick(context, { 0, 1 }, 80ms, 80ms); // down
+                        pbf_move_left_joystick(context, { 1, 0 }, 80ms, 80ms);  // right
+                        pbf_press_button(context, BUTTON_A, 60ms, 180ms);
+                        context.wait_for_all_requests();
+
+                        EndBattleWatcher battle_end;
+                        if (wait_until(stream, context, 1500ms, { {battle_end} }) == 0) {
+                            escaped = true;
+                            break;
+                        }
+                    }
+
+                    // Light text advance
+                    pbf_press_button(context, BUTTON_B, 40ms, 120ms);
+                    context.wait_for_all_requests();
+
+                    // Reposition cursor on "Run"
+                    pbf_move_left_joystick(context, { 0, 1 }, 80ms, 80ms);
+                    pbf_move_left_joystick(context, { 1, 0 }, 80ms, 80ms);
+                    pbf_press_button(context, BUTTON_A, 60ms, 180ms);
+                    context.wait_for_all_requests();
+
+                    if (!escaped) {
+                        stream.log("[AutoStory] run_from_battle failed. Exiting to HOME.", COLOR_RED);
+
+                        pbf_press_button(context, BUTTON_HOME, 80ms, 1200ms);
+                        pbf_press_button(context, BUTTON_X, 80ms, 300ms);
+                        pbf_press_button(context, BUTTON_A, 80ms, 1200ms);
+
+                        throw OperationFailedException(
+                            ErrorReport::SEND_ERROR_REPORT,
+                            "Failed to run from battle while moving right.",
+                            stream
+                        );
+                    }
+
+                    // Critical: let overworld stabilize before next step
+                    context.wait_for_all_requests();
+                    context.wait_for(1000ms);
+
+                    continue;
+                }
+            }
+
+            stream.log("[AutoStory] Completed fixed right movement (18 steps).", COLOR_GREEN);
+        }
+
+    // ---------------------------------------------------------------------------
+    // Helper function to walk up through the second grass patch
+    // ---------------------------------------------------------------------------
+        static void walk_up_through_grass_2(VideoStream& stream, ProControllerContext& context) {
+
+            BlackScreenWatcher battle_start;
+            BattleMenuWatcher battle_menu(BattleType::STANDARD, COLOR_YELLOW);
+            BattleDialogWatcher battle_dialog(COLOR_YELLOW);
+
+            for (size_t step = 0; step < 18; step++) {
+
+                context.wait_for_all_requests();
+
+                // Move right (fixed step)
+                pbf_move_left_joystick(context, { 0, 1 }, 200ms, 0ms);
+
+                context.wait_for_all_requests();
+
+                // Check for battle after movement
+                int battle_ret = wait_until(
+                    stream, context,
+                    2500ms,
+                    {
+                        {battle_start},  // 0
+                        {battle_menu},   // 1
+                        {battle_dialog}, // 2
+                    }
+                    );
+
+                if (battle_ret >= 0) {
+                    stream.log(
+                        "[AutoStory] battle detected during movement. ret = " + std::to_string(battle_ret),
+                        COLOR_ORANGE
+                    );
+
+                    bool escaped = false;
+                    auto deadline = std::chrono::steady_clock::now() + 30s;
+
+                    while (std::chrono::steady_clock::now() < deadline) {
+                        // Spam escape inputs
+                        pbf_press_button(context, BUTTON_B, 40ms, 120ms);
+                        context.wait_for_all_requests();
+
+                        pbf_move_left_joystick(context, { 0, 1 }, 80ms, 80ms); // down
+                        pbf_move_left_joystick(context, { 1, 0 }, 80ms, 80ms);  // right
+                        pbf_press_button(context, BUTTON_A, 60ms, 180ms);
+                        context.wait_for_all_requests();
+
+                        EndBattleWatcher battle_end;
+                        if (wait_until(stream, context, 1500ms, { {battle_end} }) == 0) {
+                            escaped = true;
+                            break;
+                        }
+                    }
+
+                    // Light text advance
+                    pbf_press_button(context, BUTTON_B, 40ms, 120ms);
+                    context.wait_for_all_requests();
+
+                    // Reposition cursor on "Run"
+                    pbf_move_left_joystick(context, { 0, 1 }, 80ms, 80ms);
+                    pbf_move_left_joystick(context, { 1, 0 }, 80ms, 80ms);
+                    pbf_press_button(context, BUTTON_A, 60ms, 180ms);
+                    context.wait_for_all_requests();
+
+                    if (!escaped) {
+                        stream.log("[AutoStory] run_from_battle failed. Exiting to HOME.", COLOR_RED);
+
+                        pbf_press_button(context, BUTTON_HOME, 80ms, 1200ms);
+                        pbf_press_button(context, BUTTON_X, 80ms, 300ms);
+                        pbf_press_button(context, BUTTON_A, 80ms, 1200ms);
+
+                        throw OperationFailedException(
+                            ErrorReport::SEND_ERROR_REPORT,
+                            "Failed to run from battle while moving right.",
+                            stream
+                        );
+                    }
+
+                    // Critical: let overworld stabilize before next step
+                    context.wait_for_all_requests();
+                    context.wait_for(1000ms);
+
+                    continue;
+                }
+            }
+
+            stream.log("[AutoStory] Completed fixed up movement (18 steps).", COLOR_GREEN);
+        }
+    // ---------------------------------------------------------------------------
+    //  Helper function to walk right through the second grass patch
+    // ---------------------------------------------------------------------------
+        static void walk_right_through_grass_2(VideoStream& stream, ProControllerContext& context) {
+
+            BlackScreenWatcher battle_start;
+            BattleMenuWatcher battle_menu(BattleType::STANDARD, COLOR_YELLOW);
+            BattleDialogWatcher battle_dialog(COLOR_YELLOW);
+
+            for (size_t step = 0; step < 10; step++) {
+
+                context.wait_for_all_requests();
+
+                // Move right (fixed step)
+                pbf_move_left_joystick(context, { +1, 0 }, 200ms, 0ms);
+
+                context.wait_for_all_requests();
+
+                // Check for battle after movement
+                int battle_ret = wait_until(
+                    stream, context,
+                    2500ms,
+                    {
+                        {battle_start},  // 0
+                        {battle_menu},   // 1
+                        {battle_dialog}, // 2
+                    }
+                    );
+
+                if (battle_ret >= 0) {
+                    stream.log(
+                        "[AutoStory] battle detected during movement. ret = " + std::to_string(battle_ret),
+                        COLOR_ORANGE
+                    );
+
+                    bool escaped = false;
+                    auto deadline = std::chrono::steady_clock::now() + 30s;
+
+                    while (std::chrono::steady_clock::now() < deadline) {
+                        // Spam escape inputs
+                        pbf_press_button(context, BUTTON_B, 40ms, 120ms);
+                        context.wait_for_all_requests();
+
+                        pbf_move_left_joystick(context, { 0, 1 }, 80ms, 80ms); // down
+                        pbf_move_left_joystick(context, { 1, 0 }, 80ms, 80ms);  // right
+                        pbf_press_button(context, BUTTON_A, 60ms, 180ms);
+                        context.wait_for_all_requests();
+
+                        EndBattleWatcher battle_end;
+                        if (wait_until(stream, context, 1500ms, { {battle_end} }) == 0) {
+                            escaped = true;
+                            break;
+                        }
+                    }
+
+                    // Light text advance
+                    pbf_press_button(context, BUTTON_B, 40ms, 120ms);
+                    context.wait_for_all_requests();
+
+                    // Reposition cursor on "Run"
+                    pbf_move_left_joystick(context, { 0, 1 }, 80ms, 80ms);
+                    pbf_move_left_joystick(context, { 1, 0 }, 80ms, 80ms);
+                    pbf_press_button(context, BUTTON_A, 60ms, 180ms);
+                    context.wait_for_all_requests();
+
+                    if (!escaped) {
+                        stream.log("[AutoStory] run_from_battle failed. Exiting to HOME.", COLOR_RED);
+
+                        pbf_press_button(context, BUTTON_HOME, 80ms, 1200ms);
+                        pbf_press_button(context, BUTTON_X, 80ms, 300ms);
+                        pbf_press_button(context, BUTTON_A, 80ms, 1200ms);
+
+                        throw OperationFailedException(
+                            ErrorReport::SEND_ERROR_REPORT,
+                            "Failed to run from battle while moving right.",
+                            stream
+                        );
+                    }
+
+                    // Critical: let overworld stabilize before next step
+                    context.wait_for_all_requests();
+                    context.wait_for(1000ms);
+
+                    continue;
+                }
+            }
+
+            stream.log("[AutoStory] Completed fixed right movement (10 steps).", COLOR_GREEN);
+        }
+    
+    //helper function for post catch tutorial to catch one pokemon
+        static void catch_1_pokemon(
+            VideoStream& stream,
+            ProControllerContext& context
+        ){
+            stream.log("[AutoStory] Starting catch_1_pokemon helper...", COLOR_BLUE);
+
+            // Feedback save_game() from GameNavigation.cpp
+            save_game(stream, context);
+
+            context.wait_for_all_requests();
+            pbf_wait(context, 1000ms);
+
+            BlackScreenWatcher battle_start;
+            BattleMenuWatcher battle_menu(BattleType::STANDARD, COLOR_YELLOW);
+            BattleDialogWatcher battle_dialog(COLOR_YELLOW);
+
+            bool encounter_found = false;
+
+            // Wiggle left/right until battle starts.
+            while (!encounter_found){
+
+                // Turn left.
+                pbf_move_left_joystick(context, {-1, 0}, 120ms, 200ms);
+                context.wait_for_all_requests();
+
+                int ret = wait_until(
+                    stream,
+                    context,
+                    1500ms,
+                    {
+                        {battle_start},
+                        {battle_menu},
+                        {battle_dialog},
+                    }
+                );
+
+                if (ret >= 0){
+                    encounter_found = true;
+                    break;
+                }
+
+                // Turn right.
+                pbf_move_left_joystick(context, {1, 0}, 120ms, 200ms);
+                context.wait_for_all_requests();
+
+                ret = wait_until(
+                    stream,
+                    context,
+                    1500ms,
+                    {
+                        {battle_start},
+                        {battle_menu},
+                        {battle_dialog},
+                    }
+                );
+
+                if (ret >= 0){
+                    encounter_found = true;
+                    break;
+                }
+            }
+
+            stream.log("[AutoStory] Wild battle detected!", COLOR_GREEN);
+
+            // Let battle fully load.
+            pbf_wait(context, 3000ms);
+
+            // Catch the pokemon.
+            CatchResults result = basic_catcher(
+                stream,
+                context,
+                Language::English,
+                "poke-ball",
+                10
+            );
+
+            switch (result.result){
+            case CatchResult::POKEMON_CAUGHT:
+                stream.log(
+                    "[AutoStory] Pokemon successfully caught.",
+                    COLOR_GREEN
+                );
+                break;
+
+            default:
+                stream.log(
+                    "[AutoStory] Catch attempt failed.",
+                    COLOR_ORANGE
+                );
+                break;
+            }
+
+            context.wait_for_all_requests();
+            pbf_wait(context, 1500ms);
+        }
+    //Navigation functions for each part of the tutorial. These functions are meant to be used 
+    //in order and rely on the state of the game being what it is at the end of the previous function. 
+    //They may also be modified or removed without warning.
+        
             // ---------------------------------------------------------------------------
             // Segment 00-000 begins
             // Navigates from player's room to Route 201 through Mom/Barry dialogues.
             // ---------------------------------------------------------------------------
 
-            static void tutorial_part_1_navigation(VideoStream& stream, ProControllerContext& context) {
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 527ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, 1.000000}, 456ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 915ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, 1.000000}, 642ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 557ms, 0ms);
-                pbf_wait(context, 978ms);
-                pbf_move_left_joystick(context, {0.000000, -1.000000}, 1112ms, 0ms);
-                pbf_wait(context, 4967ms);
+        static void tutorial_part_1_navigation(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
+            DateTime t{ 2026, 1, 1, 0, 0, 0 };
+            set_time_fast(env, context, t);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 527ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, 1.000000 }, 456ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 915ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, 1.000000 }, 642ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 557ms, 0ms);
+            pbf_wait(context, 978ms);
+            pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 1112ms, 0ms);
+            pbf_wait(context, 4967ms);
 
-                wait_for_dialogue(stream, context, "Phase 1 (Mom)");
+            wait_for_dialogue(stream, context, "Phase 1 (Mom)");
 
-                pbf_mash_button(context, BUTTON_A, 5000ms);
-                pbf_wait(context, 300ms);
+            pbf_mash_button(context, BUTTON_A, 5000ms);
+            pbf_wait(context, 300ms);
 
-                pbf_move_left_joystick(context, {0.000000, -1.000000}, 1662ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, -1.000000}, 49ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, -0.000000}, 1215ms, 0ms);
-                pbf_wait(context, 1419ms);
+            pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 1662ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, -1.000000 }, 49ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 1215ms, 0ms);
+            pbf_wait(context, 1419ms);
 
-                wait_for_dialogue(stream, context, "Phase 2 (Mom Warning)");
+            wait_for_dialogue(stream, context, "Phase 2 (Mom Warning)");
 
-                pbf_mash_button(context, BUTTON_A, 2500ms);
-                pbf_wait(context, 300ms);
+            pbf_mash_button(context, BUTTON_A, 2500ms);
+            pbf_wait(context, 300ms);
 
-                pbf_move_left_joystick(context, {0.000000, -1.000000}, 680ms, 0ms);
+            pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 680ms, 0ms);
 
-                pbf_wait(context, 4000ms);
+            pbf_wait(context, 4000ms);
 
-                pbf_move_left_joystick(context, {-1.000000, -0.000000}, 1748ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 18ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 2763ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 58ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, -0.000000}, 1364ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 1748ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 18ms, 0ms);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 2763ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 58ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 1364ms, 0ms);
 
-                wait_for_dialogue(stream, context, "Phase 3 (Barry 1st)");
-                pbf_mash_button(context, BUTTON_A, 6000ms);
-                pbf_wait(context, 800ms);
-                wait_for_dialogue(stream, context, "Phase 3 (Barry 1st)");
-                pbf_mash_button(context, BUTTON_A, 6000ms);
-                pbf_wait(context, 800ms);
+            wait_for_dialogue(stream, context, "Phase 3 (Barry 1st)");
+            pbf_mash_button(context, BUTTON_A, 6000ms);
+            pbf_wait(context, 800ms);
+            wait_for_dialogue(stream, context, "Phase 3 (Barry 1st)");
+            pbf_mash_button(context, BUTTON_A, 6000ms);
+            pbf_wait(context, 800ms);
 
-                pbf_wait(context, 1306ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 2722ms, 0ms);
-                pbf_wait(context, 1445ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 161ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 370ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, -0.000000}, 667ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 130ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 705ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 196ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 684ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, 1.000000}, 205ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 590ms, 0ms);
-                pbf_wait(context, 1422ms);
+            pbf_wait(context, 1306ms);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 2722ms, 0ms);
+            pbf_wait(context, 1445ms);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 161ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 370ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 667ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 130ms, 0ms);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 705ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 196ms, 0ms);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 684ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, 1.000000 }, 205ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 590ms, 0ms);
+            pbf_wait(context, 1422ms);
 
-                wait_for_dialogue(stream, context, "Phase 8 (Barry 2nd dialog)");
-                pbf_mash_button(context, BUTTON_A, 10000ms);
+            wait_for_dialogue(stream, context, "Phase 8 (Barry 2nd dialog)");
+            pbf_mash_button(context, BUTTON_A, 10000ms);
 
-                pbf_wait(context, 856ms);
-                pbf_move_left_joystick(context, {-1.000000, -0.000000}, 920ms, 0ms);
-                pbf_wait(context, 631ms);
-                pbf_move_left_joystick(context, {0.000000, -1.000000}, 972ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -1.000000}, 72ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 1127ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -1.000000}, 82ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, -1.000000}, 1335ms, 0ms);
-                pbf_wait(context, 1124ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 2513ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, 1.000000}, 51ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 5861ms, 0ms);
-                pbf_wait(context, 134ms);
+            pbf_wait(context, 856ms);
+            pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 920ms, 0ms);
+            pbf_wait(context, 631ms);
+            pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 972ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, -1.000000 }, 72ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 1127ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, -1.000000 }, 82ms, 0ms);
+            pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 1335ms, 0ms);
+            pbf_wait(context, 1124ms);
+            pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 2513ms, 0ms);
+            pbf_move_left_joystick(context, { 1.000000, 1.000000 }, 51ms, 0ms);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 5861ms, 0ms);
+            pbf_wait(context, 134ms);
 
 
-                wait_for_dialogue(stream, context, "Phase 9 (Barry Route 201)");
+            wait_for_dialogue(stream, context, "Phase 9 (Barry Route 201)");
 
-                pbf_mash_button(context, BUTTON_B, 6000ms);
-                pbf_wait(context, 800ms);
+            pbf_mash_button(context, BUTTON_B, 6000ms);
+            pbf_wait(context, 800ms);
 
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 700ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 279ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 0.000000}, 10ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 145ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 0.000000}, 7703ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 140ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 1905ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 39ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 0.000000}, 544ms, 1000ms);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 700ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 279ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 0.000000 }, 10ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 145ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 0.000000 }, 7703ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 140ms, 0ms);
+            pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 1700ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 39ms, 0ms);
+            pbf_move_left_joystick(context, { -1.000000, 0.000000 }, 544ms, 1000ms);
 
-                pbf_wait(context, 1000ms);
+            pbf_wait(context, 1000ms);
 
-                save_game(stream, context);
-                context.wait_for_all_requests();
-            }
+            save_game(stream, context);
+            context.wait_for_all_requests();
+        }
             // ---------------------------------------------------------------------------
             //  Segment 00-001 begins
             //  Navigates into lake Verity to recieve starter
@@ -271,510 +758,53 @@ namespace PokemonAutomation {
                 stream.log("Mashing B for briefcase to fully open.");
                 pbf_mash_button(context, BUTTON_B, 2000ms);
             }
-            // ---------------------------------------------------------------------------
-            // Starter selection
-            // ---------------------------------------------------------------------------
 
-            static void select_turtwig(VideoStream& stream, ProControllerContext& context) {
-                stream.log("[DEBUG] Turtwig Selection: Starting starter selection");
-
-                pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
-                context.wait_for_all_requests();
-
-                ShortDialogWatcher watcher(COLOR_CYAN);
-                int ret = run_until<ProControllerContext>(
-                    stream, context,
-                    [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
-                    { watcher }
-                );
-                if (ret != 0) {
-                    ShortDialogWatcher watcher_red(COLOR_RED);
-                    ret = run_until<ProControllerContext>(
-                        stream, context,
-                        [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
-                        { watcher_red }
-                    );
-                }
-                stream.log(ret == 0 ? "[DEBUG] Turtwig Selection: Confirmation dialogue detected"
-                    : "[WARNING] Turtwig Selection: Dialogue detection failed, proceeding anyway");
-
-                pbf_wait(context, 400ms);
-                pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
-                pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
-                context.wait_for_all_requests();
-                stream.log("[DEBUG] Turtwig Selection: Selection complete");
-            }
-
-            static void select_chimchar(VideoStream& stream, ProControllerContext& context) {
-                stream.log("[DEBUG] Chimchar Selection: Starting starter selection");
-
-                pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
-                pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
-                context.wait_for_all_requests();
-
-                ShortDialogWatcher watcher(COLOR_CYAN);
-                int ret = run_until<ProControllerContext>(
-                    stream, context,
-                    [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
-                    { watcher }
-                );
-                if (ret != 0) {
-                    ShortDialogWatcher watcher_red(COLOR_RED);
-                    ret = run_until<ProControllerContext>(
-                        stream, context,
-                        [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
-                        { watcher_red }
-                    );
-                }
-                stream.log(ret == 0 ? "[DEBUG] Chimchar Selection: Confirmation dialogue detected"
-                    : "[WARNING] Chimchar Selection: Dialogue detection failed, proceeding anyway");
-
-                pbf_wait(context, 400ms);
-                pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
-                pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
-                context.wait_for_all_requests();
-                stream.log("[DEBUG] Chimchar Selection: Selection complete");
-            }
-
-            static void select_piplup(VideoStream& stream, ProControllerContext& context) {
-                stream.log("[DEBUG] Piplup Selection: Starting starter selection");
-
-                pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
-                pbf_press_dpad(context, DPAD_RIGHT, 160ms, 840ms);
-                pbf_press_button(context, BUTTON_ZL, 160ms, 240ms);
-                context.wait_for_all_requests();
-
-                ShortDialogWatcher watcher(COLOR_CYAN);
-                int ret = run_until<ProControllerContext>(
-                    stream, context,
-                    [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
-                    { watcher }
-                );
-                if (ret != 0) {
-                    ShortDialogWatcher watcher_red(COLOR_RED);
-                    ret = run_until<ProControllerContext>(
-                        stream, context,
-                        [](ProControllerContext& ctx) { ctx.wait_for(std::chrono::milliseconds(5000)); },
-                        { watcher_red }
-                    );
-                }
-                stream.log(ret == 0 ? "[DEBUG] Piplup Selection: Confirmation dialogue detected"
-                    : "[WARNING] Piplup Selection: Dialogue detection failed, proceeding anyway");
-
-                pbf_wait(context, 400ms);
-                pbf_press_dpad(context, DPAD_UP, 80ms, 400ms);
-                pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
-                context.wait_for_all_requests();
-                stream.log("[DEBUG] Piplup Selection: Selection complete");
-            }
-            static void fight_starly(VideoStream& stream, ProControllerContext& context) {
-                stream.log("Starting Starly battle...");
-
-                // Give time for battle transition
-                pbf_wait(context, 5000ms);
-
-                // Mash A to get through intro dialogue
-                pbf_mash_button(context, BUTTON_A, 5000ms);
-
-                // Use first move repeatedly (Tackle/Scratch/Pound)
-                for (int i = 0; i < 6; i++){
-                    pbf_press_button(context, BUTTON_A, 100ms, 2000ms); // Select move
-                    pbf_wait(context, 3000ms); // Wait for animation + damage
-                }
-
-                // Mash through faint + post-battle dialogue
-                pbf_mash_button(context, BUTTON_A, 8000ms);
-
-                stream.log("Starly battle complete.");
-
-                wait_for_dialogue(stream, context, "Phase 9 (post battle text)");
-
-                pbf_mash_button(context, BUTTON_B, 20000ms);
-
-                wait_for_dialogue(stream, context, "Phase 9 (post battle text)");
-
-                pbf_mash_button(context, BUTTON_B, 5000ms);
-            }
-
-            // ---------------------------------------------------------------------------
-            // Helper function for 1st grass patch
-            // ---------------------------------------------------------------------------
-            class BattleDialogWatcher : public DetectorToFinder<BattleDialogDetector>{
-            public:
-                BattleDialogWatcher(Color color = COLOR_RED)
-                    : DetectorToFinder("BattleDialogWatcher", std::chrono::milliseconds(250), color)
-                {}
-            };
-            static void set_time_fast(
-                SingleSwitchProgramEnvironment& env,
-                ProControllerContext& context,
-                const DateTime& target
-            ){
-                env.log("[AutoStory] Fast date set starting...", COLOR_ORANGE);
-
-                // 1) Home
-                NintendoSwitch::go_home(env.console, context);
-
-                // 2) Navigate to Date/Time settings quickly.
-                NintendoSwitch::home_to_date_time(env.console, context, true);
-
-                // 3) Enter date editor.
-                pbf_press_button(context, BUTTON_A, 80ms, 240ms);
-
-                // 4) Wait for date screen and set exact time.
-                NintendoSwitch::DateChangeWatcher date_reader(env.console);
-                int ret = wait_until(
-                    env.console, context, 10s,
-                    {date_reader}
-                );
-                if (ret < 0){
-                    OperationFailedException::fire(
-                        ErrorReport::SEND_ERROR_REPORT,
-                        "Failed to enter Date Change screen.",
-                        env.console
-                    );
-                }
-
-                {
-                    VideoOverlaySet overlays(env.console.overlay());
-                    date_reader.make_overlays(overlays);
-                    date_reader.set_date(env.program_info(), env.console, context, target);
-                }
-
-                // 5) Commit date.
-                pbf_press_button(context, BUTTON_A, 160ms, 240ms);
-
-                // 6) Back to game.
-                pbf_press_button(
-                    context, BUTTON_HOME, 160ms,
-                    ConsoleSettings::instance().SETTINGS_TO_HOME_DELAY0
-                );
-                NintendoSwitch::resume_game_from_home(env.console, context, false);
-
-                context.wait_for_all_requests();
-                context.wait_for(500ms);
-            }
-            static void walk_right_until_on_path(VideoStream& stream, ProControllerContext& context){
-
-                BlackScreenWatcher battle_start;
-                BattleMenuWatcher battle_menu(BattleType::STANDARD, COLOR_YELLOW);
-                BattleDialogWatcher battle_dialog(COLOR_YELLOW);
-
-                for (size_t step = 0; step < 18; step++){
-
-                    context.wait_for_all_requests();
-
-                    // Move right (fixed step)
-                    pbf_move_left_joystick(context, {+1, 0}, 200ms, 0ms);
-
-                    context.wait_for_all_requests();
-
-                    // Check for battle after movement
-                    int battle_ret = wait_until(
-                        stream, context,
-                        2500ms,
-                        {
-                            {battle_start},  // 0
-                            {battle_menu},   // 1
-                            {battle_dialog}, // 2
-                        }
-                    );
-
-                    if (battle_ret >= 0){
-                        stream.log(
-                            "[AutoStory] battle detected during movement. ret = " + std::to_string(battle_ret),
-                            COLOR_ORANGE
-                        );
-
-                        bool escaped = false;
-                        auto deadline = std::chrono::steady_clock::now() + 30s;
-
-                        while (std::chrono::steady_clock::now() < deadline){
-                            // Spam escape inputs
-                            pbf_press_button(context, BUTTON_B, 40ms, 120ms);
-                            context.wait_for_all_requests();
-
-                            pbf_move_left_joystick(context, {0, 1}, 80ms, 80ms); // down
-                            pbf_move_left_joystick(context, {1, 0}, 80ms, 80ms);  // right
-                            pbf_press_button(context, BUTTON_A, 60ms, 180ms);
-                            context.wait_for_all_requests();
-
-                            EndBattleWatcher battle_end;
-                            if (wait_until(stream, context, 1500ms, {{battle_end}}) == 0){
-                                escaped = true;
-                                break;
-                            }
-                        }
-
-                        // Light text advance
-                        pbf_press_button(context, BUTTON_B, 40ms, 120ms);
-                        context.wait_for_all_requests();
-
-                        // Reposition cursor on "Run"
-                        pbf_move_left_joystick(context, {0, 1}, 80ms, 80ms);
-                        pbf_move_left_joystick(context, {1, 0}, 80ms, 80ms);
-                        pbf_press_button(context, BUTTON_A, 60ms, 180ms);
-                        context.wait_for_all_requests();
-
-                        if (!escaped){
-                            stream.log("[AutoStory] run_from_battle failed. Exiting to HOME.", COLOR_RED);
-
-                            pbf_press_button(context, BUTTON_HOME, 80ms, 1200ms);
-                            pbf_press_button(context, BUTTON_X, 80ms, 300ms);
-                            pbf_press_button(context, BUTTON_A, 80ms, 1200ms);
-
-                            throw OperationFailedException(
-                                ErrorReport::SEND_ERROR_REPORT,
-                                "Failed to run from battle while moving right.",
-                                stream
-                            );
-                        }
-
-                        // Critical: let overworld stabilize before next step
-                        context.wait_for_all_requests();
-                        context.wait_for(1000ms);
-
-                        continue;
-                    }
-                }
-
-                stream.log("[AutoStory] Completed fixed right movement (18 steps).", COLOR_GREEN);
-            }
-
-            // ---------------------------------------------------------------------------
-            // Helper function to walk up through the grass patch
-            // ---------------------------------------------------------------------------
-            static void walk_up_through_grass_2(VideoStream& stream, ProControllerContext& context){
-
-                BlackScreenWatcher battle_start;
-                BattleMenuWatcher battle_menu(BattleType::STANDARD, COLOR_YELLOW);
-                BattleDialogWatcher battle_dialog(COLOR_YELLOW);
-
-                for (size_t step = 0; step < 18; step++){
-
-                    context.wait_for_all_requests();
-
-                    // Move right (fixed step)
-                    pbf_move_left_joystick(context, {0, 1}, 200ms, 0ms);
-
-                    context.wait_for_all_requests();
-
-                    // Check for battle after movement
-                    int battle_ret = wait_until(
-                        stream, context,
-                        2500ms,
-                        {
-                            {battle_start},  // 0
-                            {battle_menu},   // 1
-                            {battle_dialog}, // 2
-                        }
-                    );
-
-                    if (battle_ret >= 0){
-                        stream.log(
-                            "[AutoStory] battle detected during movement. ret = " + std::to_string(battle_ret),
-                            COLOR_ORANGE
-                        );
-
-                        bool escaped = false;
-                        auto deadline = std::chrono::steady_clock::now() + 30s;
-
-                        while (std::chrono::steady_clock::now() < deadline){
-                            // Spam escape inputs
-                            pbf_press_button(context, BUTTON_B, 40ms, 120ms);
-                            context.wait_for_all_requests();
-
-                            pbf_move_left_joystick(context, {0, 1}, 80ms, 80ms); // down
-                            pbf_move_left_joystick(context, {1, 0}, 80ms, 80ms);  // right
-                            pbf_press_button(context, BUTTON_A, 60ms, 180ms);
-                            context.wait_for_all_requests();
-
-                            EndBattleWatcher battle_end;
-                            if (wait_until(stream, context, 1500ms, {{battle_end}}) == 0){
-                                escaped = true;
-                                break;
-                            }
-                        }
-
-                        // Light text advance
-                        pbf_press_button(context, BUTTON_B, 40ms, 120ms);
-                        context.wait_for_all_requests();
-
-                        // Reposition cursor on "Run"
-                        pbf_move_left_joystick(context, {0, 1}, 80ms, 80ms);
-                        pbf_move_left_joystick(context, {1, 0}, 80ms, 80ms);
-                        pbf_press_button(context, BUTTON_A, 60ms, 180ms);
-                        context.wait_for_all_requests();
-
-                        if (!escaped){
-                            stream.log("[AutoStory] run_from_battle failed. Exiting to HOME.", COLOR_RED);
-
-                            pbf_press_button(context, BUTTON_HOME, 80ms, 1200ms);
-                            pbf_press_button(context, BUTTON_X, 80ms, 300ms);
-                            pbf_press_button(context, BUTTON_A, 80ms, 1200ms);
-
-                            throw OperationFailedException(
-                                ErrorReport::SEND_ERROR_REPORT,
-                                "Failed to run from battle while moving right.",
-                                stream
-                            );
-                        }
-
-                        // Critical: let overworld stabilize before next step
-                        context.wait_for_all_requests();
-                        context.wait_for(1000ms);
-
-                        continue;
-                    }
-                }
-
-                stream.log("[AutoStory] Completed fixed right movement (18 steps).", COLOR_GREEN);
-            }
-            static void walk_righ_through_grass_2(VideoStream& stream, ProControllerContext& context){
-
-                BlackScreenWatcher battle_start;
-                BattleMenuWatcher battle_menu(BattleType::STANDARD, COLOR_YELLOW);
-                BattleDialogWatcher battle_dialog(COLOR_YELLOW);
-
-                for (size_t step = 0; step < 10; step++){
-
-                    context.wait_for_all_requests();
-
-                    // Move right (fixed step)
-                    pbf_move_left_joystick(context, {+1, 0}, 200ms, 0ms);
-
-                    context.wait_for_all_requests();
-
-                    // Check for battle after movement
-                    int battle_ret = wait_until(
-                        stream, context,
-                        2500ms,
-                        {
-                            {battle_start},  // 0
-                            {battle_menu},   // 1
-                            {battle_dialog}, // 2
-                        }
-                    );
-
-                    if (battle_ret >= 0){
-                        stream.log(
-                            "[AutoStory] battle detected during movement. ret = " + std::to_string(battle_ret),
-                            COLOR_ORANGE
-                        );
-
-                        bool escaped = false;
-                        auto deadline = std::chrono::steady_clock::now() + 30s;
-
-                        while (std::chrono::steady_clock::now() < deadline){
-                            // Spam escape inputs
-                            pbf_press_button(context, BUTTON_B, 40ms, 120ms);
-                            context.wait_for_all_requests();
-
-                            pbf_move_left_joystick(context, {0, 1}, 80ms, 80ms); // down
-                            pbf_move_left_joystick(context, {1, 0}, 80ms, 80ms);  // right
-                            pbf_press_button(context, BUTTON_A, 60ms, 180ms);
-                            context.wait_for_all_requests();
-
-                            EndBattleWatcher battle_end;
-                            if (wait_until(stream, context, 1500ms, {{battle_end}}) == 0){
-                                escaped = true;
-                                break;
-                            }
-                        }
-
-                        // Light text advance
-                        pbf_press_button(context, BUTTON_B, 40ms, 120ms);
-                        context.wait_for_all_requests();
-
-                        // Reposition cursor on "Run"
-                        pbf_move_left_joystick(context, {0, 1}, 80ms, 80ms);
-                        pbf_move_left_joystick(context, {1, 0}, 80ms, 80ms);
-                        pbf_press_button(context, BUTTON_A, 60ms, 180ms);
-                        context.wait_for_all_requests();
-
-                        if (!escaped){
-                            stream.log("[AutoStory] run_from_battle failed. Exiting to HOME.", COLOR_RED);
-
-                            pbf_press_button(context, BUTTON_HOME, 80ms, 1200ms);
-                            pbf_press_button(context, BUTTON_X, 80ms, 300ms);
-                            pbf_press_button(context, BUTTON_A, 80ms, 1200ms);
-
-                            throw OperationFailedException(
-                                ErrorReport::SEND_ERROR_REPORT,
-                                "Failed to run from battle while moving right.",
-                                stream
-                            );
-                        }
-
-                        // Critical: let overworld stabilize before next step
-                        context.wait_for_all_requests();
-                        context.wait_for(1000ms);
-
-                        continue;
-                    }
-                }
-
-                stream.log("[AutoStory] Completed fixed right movement (18 steps).", COLOR_GREEN);
-            }
-            // ---------------------------------------------------------------------------
-            //  Segment 00-002 begins
-            //  Navigates from Exit of lake Verity to receipt of the Pokedex
-            // ---------------------------------------------------------------------------
+           // ---------------------------------------------------------------------------
+           //  Segment 00-002 begins
+           //  Navigates from Exit of lake Verity to receipt of the Pokedex
+           // ---------------------------------------------------------------------------
 
             static void tutorial_part_2_navigation(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
-
-                /*pbf_move_left_joystick(context, {0.000000, -1.000000}, 1698ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -1.000000}, 511ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 46ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -1.000000}, 310ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 5492ms, 0ms);
-                pbf_wait(context, 3963ms);
-
-                wait_for_dialogue(stream, context, "Phase 10 (Professor dialog to mom)");
-
-                pbf_mash_button(context, BUTTON_B, 40000ms);
-
-                pbf_move_left_joystick(context, {0.000000, -1.000000}, 817ms, 0ms);
-                pbf_wait(context, 1483ms);
-                pbf_move_left_joystick(context, {-1.000000, -0.000000}, 900ms, 0ms);
-                pbf_wait(context, 555ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 47ms, 0ms);
-                pbf_wait(context, 23ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 5018ms, 0ms);
-                pbf_wait(context, 169ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 745ms, 0ms);*/
-                DateTime t{2026, 1, 1, 0, 0, 50};
-                set_time_fast(env, context, t);
-                walk_right_until_on_path(stream, context);
-                pbf_move_left_joystick(context, {+1, 0}, 3000ms, 0ms);
-                context.wait_for_all_requests();
-                /*pbf_move_left_joystick(context, {1.000000, 1.000000}, 405ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 448ms, 0ms);
-                pbf_move_left_joystick(context, {-1.000000, 1.000000}, 329ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 508ms, 0ms);
-                pbf_move_left_joystick(context, {0.000000, 1.000000}, 547ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, 1.000000}, 140ms, 0ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 1947ms, 0ms);
-                pbf_wait(context, 1323ms);
-                pbf_move_left_joystick(context, {0.000000, -1.000000}, 190ms, 0ms);
-                pbf_wait(context, 475ms);
-                pbf_move_left_joystick(context, {1.000000, -0.000000}, 2796ms, 0ms);
-                pbf_wait(context, 3015ms);
                 context.wait_for_all_requests();
 
-                stream.log("[AutoStory] Part2: after Phase 10, starting movement chunk A", COLOR_YELLOW);
-
-                wait_for_dialogue(stream, context, "Phase 11 (Professor dialog nickname)");
-
-                pbf_mash_button(context, BUTTON_B, 15000ms);
                 context.wait_for_all_requests();
+                pbf_wait(context, 563ms);
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 1700ms, 0ms); 
+                pbf_move_left_joystick(context, { 1.000000, -1.000000 }, 510ms, 0ms);   
+                pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 50ms, 0ms);   
+                pbf_move_left_joystick(context, { 1.000000, -1.000000 }, 310ms, 0ms);   
+                pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 5500ms, 0ms);  
+                pbf_wait(context, 3963ms);  
+                wait_for_dialogue(stream, context, "Phase 10 (Professor dialog to mom)"); 
+                pbf_mash_button(context, BUTTON_B, 40000ms); 
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 820ms, 0ms); 
+                pbf_wait(context, 1483ms);   
+                pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 900ms, 0ms);   
+                pbf_wait(context, 555ms);    
+                pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 50ms, 0ms);  
+                pbf_wait(context, 23ms);   
+                pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 5020ms, 0ms); 
+                pbf_wait(context, 169ms);      
+                pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 745ms, 0ms);   
+                DateTime t{ 2026, 1, 1, 0, 0, 50 };       
+                set_time_fast(env, context, t);    
+                walk_right_until_on_path(stream, context);  
+                walk_up_through_grass_2(stream, context); 
+                walk_right_through_grass_2(stream, context); 
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 730ms, 0ms);  
+                pbf_wait(context, 941ms);         
+                pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 1950ms, 0ms);   
+                wait_for_dialogue(stream, context, "Phase 11 (dawn conversation)");  
+                pbf_mash_button(context, BUTTON_B, 50000ms);         
+                wait_for_dialogue(stream, context, "Phase 12 (Nickname reject)");  
+                pbf_mash_button(context, BUTTON_B, 40000ms);        
+                wait_for_dialogue(stream, context, "Phase 13 (Pokedex accept)");    
+                pbf_mash_button(context, BUTTON_A, 40000ms);
 
-                wait_for_dialogue(stream, context, "Phase 10 (Professor dialog pokedex)");
 
-                pbf_mash_button(context, BUTTON_A, 15000ms);
-                context.wait_for_all_requests();*/
                 // pokedex received
             }
+
 
             // ---------------------------------------------------------------------------
             // End of Segment 00 - 002
@@ -789,141 +819,86 @@ namespace PokemonAutomation {
             // and send the starter to pokemon HOME.
             // ---------------------------------------------------------------------------
 
-            static void tutorial_part_3_navigation(VideoStream& stream, ProControllerContext& context) {
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_mash_button(context, BUTTON_A, 200ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_UP, 80ms, 300ms);
-                pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
-                pbf_mash_button(context, BUTTON_A, 200ms);
-                pbf_press_button(context, BUTTON_B, 100ms, 100ms);
+            static void tutorial_part_3_navigation(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 2010ms, 0ms);
+
+                wait_for_dialogue(stream, context, "Phase 14 (dawn tour)");
+
+                pbf_mash_button(context, BUTTON_B, 25000ms);
+
+                pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 5125ms, 0ms);
+                pbf_wait(context, 336ms);
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 1700ms, 0ms);
+                pbf_wait(context, 213ms);
+                pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 2325ms, 0ms);
+                pbf_move_left_joystick(context, { -1.000000, 1.000000 }, 950ms, 0ms);
+                pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 2360ms, 0ms);
+                pbf_wait(context, 253ms);
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 4610ms, 0ms);
+                pbf_wait(context, 954ms);
+                pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 220ms, 0ms);
+                pbf_wait(context, 587ms);
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 1375ms, 0ms);
+                pbf_wait(context, 464ms);
+                pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 775ms, 0ms);
+                pbf_wait(context, 1655ms);
+                pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 640ms, 0ms);
+                pbf_wait(context, 3128ms);
+                pbf_press_dpad(context, DPAD_UP, 180ms, 0ms);
+                pbf_wait(context, 472ms);
+                pbf_press_dpad(context, DPAD_UP, 130ms, 0ms);
+                pbf_wait(context, 1621ms);
+                pbf_press_dpad(context, DPAD_RIGHT, 130ms, 0ms);
+                pbf_press_button(context, BUTTON_A, 180ms, 0ms);
+
+                wait_for_dialogue(stream, context, "Phase 15 (Mom conversation to accept parcel)");
+
+                pbf_mash_button(context, BUTTON_B, 40000ms);
+
+                pbf_press_dpad(context, DPAD_LEFT, 150ms, 0ms);
+                pbf_wait(context, 1143ms);
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 875ms, 0ms);
+                pbf_wait(context, 1169ms);
+                pbf_press_button(context, BUTTON_A, 180ms, 0ms);
+                pbf_wait(context, 946ms);
+                pbf_press_button(context, BUTTON_A, 180ms, 0ms);
+                pbf_wait(context, 9092ms);
+                pbf_press_button(context, BUTTON_A, 180ms, 0ms);
+                pbf_wait(context, 740ms);
+                pbf_press_button(context, BUTTON_A, 180ms, 0ms);
+                pbf_wait(context, 2998ms);
+                pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 240ms, 0ms);
+                pbf_wait(context, 893ms);
+                pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 5300ms, 0ms);
+                pbf_wait(context, 282ms);
+                pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 260ms, 0ms);
+
+                DateTime t{ 2026, 1, 1, 0, 0, 50 };
+                set_time_fast(env, context, t);
+                walk_right_until_on_path(stream, context);
+                walk_up_through_grass_2(stream, context);
+                walk_right_through_grass_2(stream, context);
+
+                pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 560ms, 0ms);
+                pbf_wait(context, 247ms);
+                pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 3305ms, 0ms);
+                pbf_wait(context, 384ms);
+                pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 1855ms, 0ms);
+                pbf_wait(context, 251ms);
+                pbf_move_left_joystick(context, { 1.000000, -0.000000 }, 429ms, 0ms);
+                pbf_wait(context, 564ms);
+                pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 846ms, 0ms);
+                pbf_wait(context, 1363ms);
+                pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 1119ms, 0ms);
+
+                wait_for_dialogue(stream, context, "Phase 16 (catch tutorial)");
+
+                pbf_mash_button(context, BUTTON_B, 70000ms);
+                context.wait_for_all_requests();
+                pbf_wait(context, 2000ms);
+                catch_1_pokemon(stream, context);
+
+                /*pbf_press_button(context, BUTTON_B, 100ms, 100ms);
                 pbf_mash_button(context, BUTTON_A, 200ms);
                 pbf_press_dpad(context, DPAD_LEFT, 80ms, 300ms);
                 pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
@@ -1389,7 +1364,7 @@ namespace PokemonAutomation {
                 pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
                 pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
                 pbf_press_dpad(context, DPAD_RIGHT, 80ms, 300ms);
-                pbf_mash_button(context, BUTTON_A, 200ms);
+                pbf_mash_button(context, BUTTON_A, 200ms);*/
                 // poketech acquired
             }
             // ---------------------------------------------------------------------------
@@ -1438,9 +1413,8 @@ namespace PokemonAutomation {
             ) {
                 checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
                     [&](size_t /*attempt*/) {
-                        set_switch_date_june9_1830(context);
                         // Segment 00-00: Intro and starter selection
-                        tutorial_part_1_navigation(env.console, context);
+                        tutorial_part_1_navigation(env, env.console, context);
                     }
                 );
             }
@@ -1487,7 +1461,7 @@ namespace PokemonAutomation {
                 checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
                     [&](size_t /*attempt*/){
                         // Segment 00-003: Poketech acquisition
-                        tutorial_part_3_navigation(env.console, context);
+                        tutorial_part_3_navigation(env, env.console, context);
                     }
                 );
             }
@@ -1531,7 +1505,7 @@ namespace PokemonAutomation {
             // ========================
 
             std::string AutoStory_Checkpoint_002::name()       const{ return "002 - " + AutoStory_Segment_00().name(); }
-            std::string AutoStory_Checkpoint_002::start_text() const{ return AutoStory_Checkpoint_000().end_text(); }
+            std::string AutoStory_Checkpoint_002::start_text() const{ return AutoStory_Checkpoint_001().end_text(); }
             std::string AutoStory_Checkpoint_002::end_text()   const{ return "Standing in front of The professor after recieving the Pokedex"; }
 
             void AutoStory_Checkpoint_002::run_checkpoint(
@@ -1547,7 +1521,7 @@ namespace PokemonAutomation {
             // ========================
 
             std::string AutoStory_Checkpoint_003::name()       const{ return "003 - " + AutoStory_Segment_00().name(); }
-            std::string AutoStory_Checkpoint_003::start_text() const{ return AutoStory_Checkpoint_000().end_text(); }
+            std::string AutoStory_Checkpoint_003::start_text() const{ return AutoStory_Checkpoint_002().end_text(); }
             std::string AutoStory_Checkpoint_003::end_text()   const{ return "Standing in front of PC. Recieved the Poketech. Ready to deposit starter"; }
 
             void AutoStory_Checkpoint_003::run_checkpoint(

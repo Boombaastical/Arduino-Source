@@ -54,85 +54,86 @@ void checkpoint_save(
 
     for (size_t attempt = 0; attempt < MAX_RETRIES; attempt++){
         try{
-            env.console.log("Checkpoint save attempt: " + std::to_string(attempt));
-
-            // ---------- STEP 1: Ensure menu ----------
-            MenuWatcher menu(COLOR_RED);
-            if (!menu.detect(env.console.video().snapshot())){
-                env.console.log("Opening menu...");
-                overworld_to_menu(env.console, context);
-                context.wait_for(std::chrono::milliseconds(300));
-            }else{
-                env.console.log("Already in menu.");
-            }
-
-            // ---------- STEP 2: Trigger save ----------
-            pbf_press_button(context, BUTTON_R, 80ms, 2000ms);
-
-            // ---------- STEP 3: Wait for save dialog ----------
-            ShortDialogWatcher dialog(COLOR_RED);
-            int dialog_ret = wait_until(
-                env.console, context,
-                std::chrono::seconds(5),
-                {dialog}
+            env.console.log(
+                "Checkpoint save attempt: " + std::to_string(attempt + 1)
             );
 
-            if (dialog_ret < 0){
-                throw OperationFailedException(
-                    ErrorReport::SEND_ERROR_REPORT,
-                    "Save dialog not detected.",
-                    env.console
-                );
-            }
+            // ---------------------------
+            // Force-close anything weird first.
+            // ---------------------------
+            pbf_mash_button(context, BUTTON_B, 1000ms);
 
-            env.console.log("Save dialog detected.");
+            // ---------------------------
+            // Aggressively attempt to open menu.
+            // No dependence on MenuWatcher.
+            // ---------------------------
+            pbf_press_button(context, BUTTON_X, 160ms, 1500ms);
 
+            // ---------------------------
+            // Trigger save
+            // ---------------------------
+            pbf_press_button(context, BUTTON_R, 160ms, 2500ms);
+
+            // ---------------------------
             // Confirm save
-            pbf_press_button(context, BUTTON_ZL, 80ms, 2000ms);
+            // ---------------------------
+            pbf_press_button(context, BUTTON_ZL, 160ms, 5000ms);
 
-            // ---------- STEP 4: Wait for save to finish ----------
+            // ---------------------------
+            // Return to overworld cleanly
+            // ---------------------------
+            pbf_mash_button(context, BUTTON_B, 1500ms);
+
+            // ---------------------------
+            // Verify overworld
+            // ---------------------------
             OverworldWatcher overworld;
-            int overworld_ret = wait_until(
-                env.console, context,
-                std::chrono::seconds(10),
+
+            int ret = wait_until(
+                env.console,
+                context,
+                std::chrono::seconds(5),
                 {overworld}
             );
 
-            if (overworld_ret < 0){
+            if (ret < 0){
                 throw OperationFailedException(
                     ErrorReport::SEND_ERROR_REPORT,
-                    "Did not return to overworld after save.",
+                    "Failed to detect overworld after save.",
                     env.console
                 );
             }
 
-            env.console.log("Returned to overworld after save.");
+            env.console.log("Checkpoint save verified.");
 
             success = true;
             break;
 
         }catch (OperationFailedException& e){
             env.console.log(
-                "Save attempt failed: " + e.message(),
+                "Checkpoint save failed: " + e.message(),
                 COLOR_RED
             );
 
-            context.wait_for(std::chrono::milliseconds(1000));
+            context.wait_for(1000ms);
         }
     }
 
-    // ---------- FALLBACK ----------
+    // ---------------------------
+    // Blind fallback
+    // ---------------------------
     if (!success){
         env.console.log(
-            "Save failed after retries. Performing blind save fallback.",
+            "All save retries failed. Using blind fallback.",
             COLOR_ORANGE
         );
 
-        pbf_press_button(context, BUTTON_X, 80ms, 1000ms);
-        pbf_press_button(context, BUTTON_R, 80ms, 2000ms);
-        pbf_press_button(context, BUTTON_ZL, 80ms, 5000ms);
-
         pbf_mash_button(context, BUTTON_B, 1000ms);
+        pbf_press_button(context, BUTTON_X, 160ms, 1500ms);
+        pbf_press_button(context, BUTTON_R, 160ms, 2500ms);
+        pbf_press_button(context, BUTTON_ZL, 160ms, 5000ms);
+        pbf_mash_button(context, BUTTON_B, 2000ms);
+
         context.wait_for_all_requests();
     }
 
@@ -140,8 +141,11 @@ void checkpoint_save(
     env.update_stats();
 
     send_program_status_notification(
-        env, notif_status_update,
-        success ? "Saved at checkpoint (verified)." : "Saved (blind fallback)."
+        env,
+        notif_status_update,
+        success
+            ? "Saved at checkpoint (verified)."
+            : "Saved at checkpoint (blind fallback)."
     );
 }
 
