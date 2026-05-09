@@ -63,21 +63,58 @@ void checkpoint_save(
     EventNotificationOption& notif_status_update,
     AutoStoryStats& stats
 ){
-    fake_save_game(env, context);
-    {
-        OverworldWatcher overworld;
-        int ret = wait_until(env.console, context, std::chrono::seconds(30), {{overworld}});
-        if (ret < 0){
-            OperationFailedException::fire(
-                ErrorReport::SEND_ERROR_REPORT,
-                "checkpoint_save: overworld not detected within 30 seconds.",
-                env.console
+    static constexpr size_t MAX_RETRIES = 10;
+    bool success = false;
+
+    for (size_t attempt = 0; attempt < MAX_RETRIES; attempt++){
+        try{
+            env.console.log("Checkpoint save attempt: " + std::to_string(attempt + 1));
+
+            pbf_mash_button(context, BUTTON_B, 1000ms);
+            fake_save_game(env, context);
+
+            OverworldWatcher overworld;
+            int ret = wait_until(
+                env.console,
+                context,
+                std::chrono::seconds(5),
+                {overworld}
             );
+            if (ret < 0){
+                throw OperationFailedException(
+                    ErrorReport::SEND_ERROR_REPORT,
+                    "Failed to detect overworld after save.",
+                    env.console
+                );
+            }
+
+            env.console.log("Checkpoint save verified.");
+            success = true;
+            break;
+
+        }catch (OperationFailedException& e){
+            env.console.log("Checkpoint save failed: " + e.message(), COLOR_RED);
+            context.wait_for(1000ms);
         }
     }
+
+    if (!success){
+        env.console.log("All save retries failed. Using blind fallback.", COLOR_ORANGE);
+        pbf_mash_button(context, BUTTON_B, 1000ms);
+        pbf_press_button(context, BUTTON_X, 160ms, 1500ms);
+        pbf_press_button(context, BUTTON_R, 160ms, 2500ms);
+        pbf_press_button(context, BUTTON_ZL, 160ms, 5000ms);
+        pbf_mash_button(context, BUTTON_B, 2000ms);
+        context.wait_for_all_requests();
+    }
+
     stats.m_checkpoint++;
     env.update_stats();
-    send_program_status_notification(env, notif_status_update, "Saved at checkpoint.");
+    send_program_status_notification(
+        env,
+        notif_status_update,
+        success ? "Saved at checkpoint (verified)." : "Saved at checkpoint (blind fallback)."
+    );
 }
 
 
