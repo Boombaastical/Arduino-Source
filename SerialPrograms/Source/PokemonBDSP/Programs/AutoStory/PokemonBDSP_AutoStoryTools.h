@@ -15,6 +15,7 @@
 #include "CommonFramework/ProgramStats/StatsTracking.h"
 #include "CommonFramework/Tools/VideoStream.h"
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
+#include "Detect/PokemonBDSP_AutoStory_MenuCursorDetector.h"
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{
@@ -221,6 +222,15 @@ bool fly_to(
     VideoStream& stream,
     ProControllerContext& context,
     const std::string& place
+);
+
+// Opens the X-menu from the overworld, navigates the cursor to `target`, and presses A.
+// num_icons: 5 (early-game layout) or 8 (late-game layout).
+void open_menu(
+    VideoStream& stream,
+    ProControllerContext& context,
+    MenuCursorPosition target,
+    int num_icons
 );
 
 

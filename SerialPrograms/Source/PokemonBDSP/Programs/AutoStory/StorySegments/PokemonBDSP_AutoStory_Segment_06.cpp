@@ -5,7 +5,18 @@
  *
  */
 
+#include "CommonFramework/Exceptions/OperationFailedException.h"
+#include "CommonFramework/Globals.h"
+#include "CommonTools/Async/InferenceRoutines.h"
+#include "CommonTools/VisualDetectors/BlackScreenDetector.h"
+#include "CommonTools/VisualDetectors/ImageMatchDetector.h"
+#include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
+#include "NintendoSwitch/Commands/NintendoSwitch_Commands_Superscalar.h"
+#include "PokemonBDSP/Inference/Battles/PokemonBDSP_BattleMenuDetector.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_DialogDetector.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_MarkFinder.h"
 #include "../PokemonBDSP_AutoStoryTools.h"
+#include "../Utils/PokemonBDSP_AutoStory_Battle.h"
 #include "PokemonBDSP_AutoStory_Segment_06.h"
 
 namespace PokemonAutomation{
@@ -48,6 +59,28 @@ void AutoStory_Checkpoint_06::run_checkpoint(
     checkpoint_06(env, context, options, stats);
 }
 
+static bool test_opening_menu(
+    VideoStream& stream,
+    ProControllerContext& context
+){
+    context.wait_for_all_requests();
+    pbf_wait(context, 2000ms);
+    context.wait_for_all_requests();
+    stream.log("test_opening_menu: testing");
+
+    open_menu(stream, context, MenuCursorPosition::BAG, 8);
+    pbf_mash_button(context, BUTTON_B, 2000ms);
+    context.wait_for_all_requests();
+    open_menu(stream, context, MenuCursorPosition::POKEDEX, 8);
+    pbf_mash_button(context, BUTTON_B, 2000ms);
+    context.wait_for_all_requests();
+    open_menu(stream, context, MenuCursorPosition::CARD, 8);
+    pbf_mash_button(context, BUTTON_B, 2000ms);
+    context.wait_for_all_requests();
+
+    return true;
+}
+
 
 void checkpoint_06(
     SingleSwitchProgramEnvironment& env,
@@ -58,6 +91,9 @@ void checkpoint_06(
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/){
             // TODO: implement Segment 06 gameplay logic
+            if (!test_opening_menu(env.console, context)){
+                OperationFailedException::fire(ErrorReport::SEND_ERROR_REPORT, "test_opening_menu: transition not detected.", env.console);
+            }
         }
     );
 }

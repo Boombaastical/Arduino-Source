@@ -5,6 +5,8 @@
  */
 
 #include "CommonFramework/Exceptions/OperationFailedException.h"
+#include "CommonFramework/Globals.h"
+#include "CommonFramework/VideoPipeline/VideoFeed.h"
 #include "CommonFramework/ImageTools/ImageBoxes.h"
 #include "CommonFramework/ImageTools/ImageStats.h"
 #include "CommonFramework/Notifications/ProgramNotifications.h"
@@ -17,6 +19,7 @@
 #include "Detect/PokemonBDSP_AutoStory_OverworldDetector.h"
 #include "PokemonBDSP_AutoStoryTools.h"
 
+#include <cstdlib>
 #include <unordered_set>
 
 namespace PokemonAutomation{
@@ -418,6 +421,100 @@ bool fly_to(
     }
     return false;
 }
+
+
+namespace{
+
+struct IconGrid { int row, col; };
+
+IconGrid icon_to_grid(MenuCursorPosition pos, int num_icons){
+    switch (pos){
+    case MenuCursorPosition::POKEDEX:      return {0, 0};
+    case MenuCursorPosition::POKEMON:      return {0, 1};
+    case MenuCursorPosition::BAG:          return {0, 2};
+    case MenuCursorPosition::CARD:         return {0, 3};
+    case MenuCursorPosition::OPTIONS:      return {1, num_icons <= 5 ? 0 : 2};
+    case MenuCursorPosition::MAP:          return {1, 0};
+    case MenuCursorPosition::CAPSULES:     return {1, 1};
+    case MenuCursorPosition::MYSTERYGIFT:  return {1, 3};
+    default:                               return {-1, -1};
+    }
+}
+
+} // anonymous namespace
+
+
+void open_menu(
+    VideoStream& stream,
+    ProControllerContext& context,
+    MenuCursorPosition target,
+    int num_icons
+){
+    using namespace std::chrono_literals;
+
+    overworld_to_menu(stream, context);
+    context.wait_for(1000ms);
+
+    MenuCursorDetector detector;
+    {
+        static const char* ICON_NAMES[MENU_CURSOR_NUM_ICONS] = {
+            "POKEDEX", "POKEMON", "BAG", "CARD",
+            "OPTIONS", "MAP", "CAPSULES", "MYSTERYGIFT",
+        };
+        std::string ref_dir = RESOURCE_PATH() + "PokemonBDSP/AutoStory";
+        for (int i = 0; i < MENU_CURSOR_NUM_ICONS; i++){
+            std::string path = ref_dir + "/" + ICON_NAMES[i] + ".png";
+            ImageRGB32 img(path);
+            if (img){
+                detector.set_icon_reference(
+                    static_cast<MenuCursorPosition>(i),
+                    std::move(img)
+                );
+            }
+        }
+    }
+    MenuCursorPosition cur = MenuCursorPosition::UNKNOWN;
+    for (int i = 0; i < 10 && cur == MenuCursorPosition::UNKNOWN; i++){
+        context.wait_for(50ms);
+        VideoSnapshot snap = stream.video().snapshot();
+        if (snap) cur = detector.detect(snap);
+    }
+    if (cur == MenuCursorPosition::UNKNOWN){
+        OperationFailedException::fire(
+            ErrorReport::SEND_ERROR_REPORT,
+            "Menu cursor not detected after opening menu.",
+            stream
+        );
+    }
+
+    IconGrid cur_g = icon_to_grid(cur,    num_icons);
+    IconGrid tgt_g = icon_to_grid(target, num_icons);
+    if (tgt_g.row == -1){
+        OperationFailedException::fire(
+            ErrorReport::SEND_ERROR_REPORT,
+            "Unknown target menu icon.",
+            stream
+        );
+    }
+
+    if (cur_g.row != tgt_g.row){
+        DpadPosition vert = (cur_g.row < tgt_g.row) ? DPAD_DOWN : DPAD_UP;
+        pbf_press_dpad(context, vert, 80ms, 300ms);
+        context.wait_for_all_requests();
+    }
+
+    int col_diff = tgt_g.col - cur_g.col;
+    if (col_diff != 0){
+        DpadPosition horiz = (col_diff > 0) ? DPAD_RIGHT : DPAD_LEFT;
+        for (int i = 0; i < std::abs(col_diff); i++){
+            pbf_press_dpad(context, horiz, 80ms, 300ms);
+            context.wait_for_all_requests();
+        }
+    }
+
+    pbf_press_button(context, BUTTON_A, 80ms, 200ms);
+}
+
 
 }
 }
