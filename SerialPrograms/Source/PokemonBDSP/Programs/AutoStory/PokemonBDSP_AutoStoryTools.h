@@ -9,11 +9,16 @@
 
 #include <functional>
 #include <string>
+#include <chrono>
 #include "Common/Cpp/Options/EnumDropdownOption.h"
+#include "CommonFramework/ImageTools/ImageBoxes.h"
 #include "CommonFramework/Language.h"
 #include "CommonFramework/Notifications/EventNotificationsTable.h"
 #include "CommonFramework/ProgramStats/StatsTracking.h"
 #include "CommonFramework/Tools/VideoStream.h"
+#include "CommonFramework/VideoPipeline/VideoOverlayScopes.h"
+#include "CommonTools/VisualDetector.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_SelectionArrow.h"
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
 
 namespace PokemonAutomation{
@@ -190,7 +195,10 @@ void mash_until_dialogue_ends(
     Button button = BUTTON_B,
     Milliseconds timeout = std::chrono::seconds(60)
 );
-
+void use_potion_first_pokemon(
+    VideoStream& stream,
+    ProControllerContext& context
+);
 
 }
 }

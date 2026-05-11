@@ -31,25 +31,6 @@ namespace PokemonAutomation {
             );
 
             // ---------------------------------------------------------------------------
-            // Starter selection
-            // ---------------------------------------------------------------------------
-
-            void select_turtwig(
-                VideoStream& stream,
-                ProControllerContext& context
-            );
-
-            void select_chimchar(
-                VideoStream& stream,
-                ProControllerContext& context
-            );
-
-            void select_piplup(
-                VideoStream& stream,
-                ProControllerContext& context
-            );
-
-            // ---------------------------------------------------------------------------
             // Battles
             // ---------------------------------------------------------------------------
 
@@ -110,16 +91,43 @@ namespace PokemonAutomation {
                 VideoStream& stream,
                 ProControllerContext& context
             );
-
-            // ---------------------------------------------------------------------------
-            // Trainer navigation
-            // ---------------------------------------------------------------------------
-
-            void walk_right_to_first_trainer(
+            void walk_through_grass(
                 VideoStream& stream,
-                ProControllerContext& context
+                ProControllerContext& context,
+                int8_t x,
+                int8_t y,
+                size_t steps,
+                const std::string& direction_name
             );
+			// ---------------------------------------------------------------------------
+			// Helper function to navigate the poketech challenge clown dialogue.
+            // Example usage
+            // Move up and talk to clown.
+            // clown_dialog_helper(
+            //     stream,
+            //     context,
+            //     DPAD_UP
+            // );
 
+            // Move left and talk to clown.
+            // clown_dialog_helper(
+            //    stream,
+            //    context,
+            //    DPAD_LEFT
+            // );
+
+            // Move right and talk to clown.
+            // clown_dialog_helper(
+            //    stream,
+            //    context,
+            //    DPAD_RIGHT
+            // );
+			// ----------------------------------------------------------------------------
+            void clown_dialog_helper(
+                VideoStream& stream,
+                ProControllerContext& context,
+                DpadPosition direction
+            );
         }
     }
 }
