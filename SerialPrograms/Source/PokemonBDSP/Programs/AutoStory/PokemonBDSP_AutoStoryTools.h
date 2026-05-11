@@ -136,6 +136,12 @@ public:
 //  Shared utility functions (implementations in .cpp)
 // ---------------------------------------------------------------------------
 
+// Fake save game to be replaced with save_game when program runs smoothly
+void checkpoint_save(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context
+);
+
 //  Save the game from the overworld, increment the checkpoint counter,
 //  update stats display, and send a status notification.
 void checkpoint_save(
@@ -173,7 +179,8 @@ void repeat_dpad(
     DpadPosition dir,
     Milliseconds press,
     Milliseconds hold,
-    size_t times
+    size_t times,
+    bool include_last_dir = true
 );
 
 //  Wait (without pressing any buttons) until a short dialogue box appears.
@@ -195,10 +202,39 @@ void mash_until_dialogue_ends(
     Button button = BUTTON_B,
     Milliseconds timeout = std::chrono::seconds(60)
 );
+<<<<<<< HEAD
 void use_potion_first_pokemon(
     VideoStream& stream,
     ProControllerContext& context
 );
+=======
+
+//  Open the bag, navigate to the repel compartment tab, and use a repel.
+//  Returns false if the repel compartment tab could not be found.
+bool activate_repel(
+    VideoStream& stream,
+    ProControllerContext& context
+);
+
+//  Walk to the nurse, heal the party, and exit the Pokemon Center.
+//  `label` names the center for log messages (e.g. "Veilstone").
+//  Returns false if the exit black screen was not detected.
+bool heal_pokemon(
+    VideoStream& stream,
+    ProControllerContext& context,
+    const std::string& label
+);
+
+// Open the map, move the cursor to either bottom left, bottom right or
+// top left, then move the cursor a number of steps, then checks for
+// correctness, and mashes A until a black screen is detected
+bool fly_to(
+    VideoStream& stream,
+    ProControllerContext& context,
+    const std::string& place
+);
+
+>>>>>>> c779b4c50c4223905aee22aaf45c9e8391ea10c6
 
 }
 }

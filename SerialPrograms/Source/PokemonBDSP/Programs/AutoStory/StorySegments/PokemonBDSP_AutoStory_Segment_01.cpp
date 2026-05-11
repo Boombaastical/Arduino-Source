@@ -5,13 +5,61 @@
  *
  */
 
+#include "CommonTools/Async/InferenceRoutines.h"
+#include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_DialogDetector.h"
 #include "../PokemonBDSP_AutoStoryTools.h"
 #include "PokemonBDSP_AutoStory_Segment_01.h"
+
+using namespace std::chrono_literals;
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{
 namespace PokemonBDSP{
 
+// ---------------------------------------------------------------------------
+//  Segment 1 Part ? Gym navigation
+//  Navigates the player through the first Gym in Oreburgh City and completes the Gym battle.
+// ---------------------------------------------------------------------------
+
+static void gym_Puzzle_01(VideoStream& stream, ProControllerContext& context){
+
+    //Upon entering the Gym.
+
+    struct Move {
+        DpadPosition dir;
+        int count;
+    };
+
+    const Move sequence[] = {
+    {DPAD_UP, 3},
+    {DPAD_LEFT, 4},
+    {DPAD_UP, 5},
+    {DPAD_RIGHT, 8},
+    {DPAD_UP, 11},
+    {DPAD_LEFT, 5},
+    {DPAD_UP, 4},
+    };
+
+    for (const auto& move : sequence){
+        for (int i = 0; i < move.count; i++){
+            pbf_press_dpad(context, move.dir, 80ms, 300ms);
+        }
+    }
+
+    //Button presses to initiate the Gym battle.
+
+    //Battle automation code.
+
+    //Button presses after battle with small cutscene of badge being put in case between dialogue boxes.
+
+    for(int i=0; i < 21; i++){
+        pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+    }
+
+    //Exits Buiilding
+    pbf_wait(context, 1000ms);
+}
 
 std::string AutoStory_Segment_01::name()       const{ return "01: Starter Received to First Badge"; }
 std::string AutoStory_Segment_01::start_text() const{ return "Start: Starter Pokemon chosen and received."; }
@@ -58,6 +106,9 @@ void Checkpoint_20(
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/){
             // TODO: implement Segment 01 gameplay logic
+
+            //#. Oreburgh Gym navigation and battle
+            gym_Puzzle_01(env.console, context);
         }
     );
 }
