@@ -9,11 +9,16 @@
 
 #include <functional>
 #include <string>
+#include <chrono>
 #include "Common/Cpp/Options/EnumDropdownOption.h"
+#include "CommonFramework/ImageTools/ImageBoxes.h"
 #include "CommonFramework/Language.h"
 #include "CommonFramework/Notifications/EventNotificationsTable.h"
 #include "CommonFramework/ProgramStats/StatsTracking.h"
 #include "CommonFramework/Tools/VideoStream.h"
+#include "CommonFramework/VideoPipeline/VideoOverlayScopes.h"
+#include "CommonTools/VisualDetector.h"
+#include "PokemonBDSP/Inference/PokemonBDSP_SelectionArrow.h"
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
 #include "Detect/PokemonBDSP_AutoStory_MenuCursorDetector.h"
 
@@ -224,6 +229,7 @@ bool fly_to(
     const std::string& place
 );
 
+<<<<<<< HEAD
 // Opens the X-menu from the overworld, navigates the cursor to `target`, and presses A.
 // num_icons: 5 (early-game layout) or 8 (late-game layout).
 void open_menu(
@@ -233,6 +239,12 @@ void open_menu(
     int num_icons
 );
 
+=======
+void use_potion_first_pokemon(
+    VideoStream& stream,
+    ProControllerContext& context
+);
+>>>>>>> e43fd8c2b8cd39c4f34aa1143deb677437db2919
 
 }
 }

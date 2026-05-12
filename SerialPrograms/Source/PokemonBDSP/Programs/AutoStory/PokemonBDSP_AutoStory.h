@@ -4,7 +4,9 @@
 #include <vector>
 #include "Common/Cpp/Options/BooleanCheckBoxOption.h"
 #include "Common/Cpp/Options/EnumDropdownOption.h"
+#include "Common/Cpp/Options/StaticTextOption.h"
 #include "CommonFramework/Notifications/EventNotificationsTable.h"
+#include "CommonTools/Options/StringSelectOption.h"
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
 #include "PokemonBDSP_AutoStoryTools.h"
 
@@ -31,12 +33,25 @@ public:
         ProControllerContext& context
         ) override;
 
-private:
-    virtual void on_config_value_changed(void* object) override;
 
 private:
-    std::vector<std::unique_ptr<BooleanCheckBoxOption>> SEGMENT_CHECKBOXES;
-    bool m_updating = false;
+    virtual void on_config_value_changed(void* object) override;
+    void update_ui_state();
+private:
+    BooleanCheckBoxOption ENABLE_ADVANCED_MODE;
+
+    StringSelectOption START_CHECKPOINT_TUTORIAL;
+    StringSelectOption END_CHECKPOINT_TUTORIAL;
+    StaticTextOption START_DESCRIPTION_SEGMENT;
+    StaticTextOption END_DESCRIPTION_SEGMENT;
+
+    StaticTextOption START_DESCRIPTION_CHECKPOINT;
+    StaticTextOption END_DESCRIPTION_CHECKPOINT;
+
+    StringSelectOption START_CHECKPOINT_MAINSTORY;
+    StringSelectOption END_CHECKPOINT_MAINSTORY;
+    StringSelectOption START_SEGMENT;
+    StringSelectOption END_SEGMENT;
 
     EnumDropdownOption<StarterChoice>      STARTERCHOICE;
     BooleanCheckBoxOption                  STARTER_SHINY;

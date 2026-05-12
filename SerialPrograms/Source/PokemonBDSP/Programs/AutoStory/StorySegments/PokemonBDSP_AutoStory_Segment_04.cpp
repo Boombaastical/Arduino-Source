@@ -42,24 +42,24 @@ void AutoStory_Segment_04::run_segment(
     context.wait_for_all_requests();
     env.console.log("Start Segment " + name(), COLOR_ORANGE);
 
-    AutoStory_Checkpoint_04().run_checkpoint(env, context, options, stats);
+    AutoStory_Checkpoint_23().run_checkpoint(env, context, options, stats);
 
     context.wait_for_all_requests();
     env.console.log("End Segment " + name(), COLOR_GREEN);
 }
 
 
-std::string AutoStory_Checkpoint_04::name()       const{ return "004 - " + AutoStory_Segment_04().name(); }
-std::string AutoStory_Checkpoint_04::start_text() const{ return "Third Gym Badge acquired (Hearthome City)."; }
-std::string AutoStory_Checkpoint_04::end_text()   const{ return "Fourth Gym Badge acquired (Pastoria City)."; }
+std::string AutoStory_Checkpoint_23::name()       const{ return "004 - " + AutoStory_Segment_04().name(); }
+std::string AutoStory_Checkpoint_23::start_text() const{ return "Third Gym Badge acquired (Hearthome City)."; }
+std::string AutoStory_Checkpoint_23::end_text()   const{ return "Fourth Gym Badge acquired (Pastoria City)."; }
 
-void AutoStory_Checkpoint_04::run_checkpoint(
+void AutoStory_Checkpoint_23::run_checkpoint(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
     AutoStoryStats& stats
 ) const{
-    checkpoint_04(env, context, options, stats);
+    Checkpoint_23(env, context, options, stats);
 }
 
 static void move_back_after_unexpected_battle(
@@ -945,7 +945,7 @@ static bool go_to_pastoria_gym(
     return true;
 }
 
-void checkpoint_04(
+void Checkpoint_23(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
