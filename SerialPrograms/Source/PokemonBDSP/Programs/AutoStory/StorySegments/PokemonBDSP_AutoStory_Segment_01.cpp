@@ -16,104 +16,138 @@ using namespace std::chrono_literals;
 namespace PokemonAutomation{
 namespace NintendoSwitch{
 namespace PokemonBDSP{
+    void jubilife_to_oreburgh_gate(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
 
-// ---------------------------------------------------------------------------
-//  Segment 1 Part ? Gym navigation
-//  Navigates the player through the first Gym in Oreburgh City and completes the Gym battle.
-// ---------------------------------------------------------------------------
+	}
 
-static void gym_Puzzle_01(VideoStream& stream, ProControllerContext& context){
+    void oreburgh_gate_to_first_gym(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
 
-    //Upon entering the Gym.
+    }
+    // ---------------------------------------------------------------------------
+    //  Segment 1 Part ? Gym navigation
+    //  Navigates the player through the first Gym in Oreburgh City and completes the Gym battle.
+    // ---------------------------------------------------------------------------
 
-    struct Move {
+    static void gym_Puzzle_01(VideoStream& stream, ProControllerContext& context){
+
+        //Upon entering the Gym.
+
+        struct Move {
         DpadPosition dir;
         int count;
-    };
+        };
+        const Move sequence[] = {
+            {DPAD_UP, 3},
+            {DPAD_LEFT, 4},
+            {DPAD_UP, 5},
+            {DPAD_RIGHT, 8},
+            {DPAD_UP, 11},
+            {DPAD_LEFT, 5},
+            {DPAD_UP, 4},
+        };
 
-    const Move sequence[] = {
-    {DPAD_UP, 3},
-    {DPAD_LEFT, 4},
-    {DPAD_UP, 5},
-    {DPAD_RIGHT, 8},
-    {DPAD_UP, 11},
-    {DPAD_LEFT, 5},
-    {DPAD_UP, 4},
-    };
-
-    for (const auto& move : sequence){
-        for (int i = 0; i < move.count; i++){
-            pbf_press_dpad(context, move.dir, 80ms, 300ms);
+        for (const auto& move : sequence) {
+            for (int i = 0; i < move.count; i++) {
+                pbf_press_dpad(context, move.dir, 80ms, 300ms);
+            }
         }
+
+        //Button presses to initiate the Gym battle.
+
+        //Battle automation code.
+
+        //Button presses after battle with small cutscene of badge being put in case between dialogue boxes.
+
+        for (int i = 0; i < 21; i++) {
+            pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+        }
+
+        //Exits Buiilding
+        pbf_wait(context, 1000ms);
     }
 
-    //Button presses to initiate the Gym battle.
+    std::string AutoStory_Segment_01::name()       const { return "01: Jubilife City to First Badge"; }
+    std::string AutoStory_Segment_01::start_text() const { return "Start: Recieved Starter back from Pokemon Home. Max leveled pokemon should have the moveset in the wiki."; }
+    std::string AutoStory_Segment_01::end_text()   const { return "End: First Gym Badge acquired (Oreburgh City)."; }
 
-    //Battle automation code.
+    void AutoStory_Segment_01::run_segment(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) const {
+        stats.m_segment++;
+        env.update_stats();
+        context.wait_for_all_requests();
+        env.console.log("Start Segment " + name(), COLOR_ORANGE);
 
-    //Button presses after battle with small cutscene of badge being put in case between dialogue boxes.
-
-    for(int i=0; i < 21; i++){
-        pbf_press_dpad(context, DPAD_DOWN, 80ms, 300ms);
+        AutoStory_Checkpoint_005().run_checkpoint(env, context, options, stats);
+        AutoStory_Checkpoint_006().run_checkpoint(env, context, options, stats);
+        context.wait_for_all_requests();
+        env.console.log("End Segment " + name(), COLOR_GREEN);
     }
 
-    //Exits Buiilding
-    pbf_wait(context, 1000ms);
-}
 
-std::string AutoStory_Segment_01::name()       const{ return "01: Starter Received to First Badge"; }
-std::string AutoStory_Segment_01::start_text() const{ return "Start: Starter Pokemon chosen and received."; }
-std::string AutoStory_Segment_01::end_text()   const{ return "End: First Gym Badge acquired (Oreburgh City)."; }
+    std::string AutoStory_Checkpoint_005::name()       const { return "005 - " + AutoStory_Segment_01().name(); }
+    std::string AutoStory_Checkpoint_005::start_text() const { return "Recieved Starter back from Pokemon Home. Max leveled pokemon should have the moveset in the wiki."; }
+    std::string AutoStory_Checkpoint_005::end_text()   const { return "Standing outside the Oreburgh Gate on the Jubilife City side."; }
 
-void AutoStory_Segment_01::run_segment(
-    SingleSwitchProgramEnvironment& env,
-    ProControllerContext& context,
-    AutoStoryOptions options,
-    AutoStoryStats& stats
-) const{
-    stats.m_segment++;
-    env.update_stats();
-    context.wait_for_all_requests();
-    env.console.log("Start Segment " + name(), COLOR_ORANGE);
-
-    AutoStory_Checkpoint_20().run_checkpoint(env, context, options, stats);
-
-    context.wait_for_all_requests();
-    env.console.log("End Segment " + name(), COLOR_GREEN);
-}
+    void AutoStory_Checkpoint_005::run_checkpoint(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) const {
+        Checkpoint_005(env, context, options, stats);
+    }
 
 
-std::string AutoStory_Checkpoint_20::name()       const{ return "001 - " + AutoStory_Segment_01().name(); }
-std::string AutoStory_Checkpoint_20::start_text() const{ return "Starter Pokemon chosen and received."; }
-std::string AutoStory_Checkpoint_20::end_text()   const{ return "First Gym Badge acquired (Oreburgh City)."; }
+    void Checkpoint_005(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) {
+        checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
+            [&](size_t /*attempt*/) {
+                jubilife_to_oreburgh_Gate(env, env.console, context);
 
-void AutoStory_Checkpoint_20::run_checkpoint(
-    SingleSwitchProgramEnvironment& env,
-    ProControllerContext& context,
-    AutoStoryOptions options,
-    AutoStoryStats& stats
-) const{
-    Checkpoint_20(env, context, options, stats);
-}
+            }
+        );
+    }
 
+    std::string AutoStory_Checkpoint_006::name()       const { return "006 - " + AutoStory_Segment_01().name(); }
+    std::string AutoStory_Checkpoint_006::start_text() const { return AutoStory_Checkpoint_005().end_text(); }
+    std::string AutoStory_Checkpoint_006::end_text()   const { return "Standing At the first gym leader after defeating him."; }
 
-void Checkpoint_20(
-    SingleSwitchProgramEnvironment& env,
-    ProControllerContext& context,
-    AutoStoryOptions options,
-    AutoStoryStats& stats
-){
-    checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
-        [&](size_t /*attempt*/){
-            // TODO: implement Segment 01 gameplay logic
-
-            //#. Oreburgh Gym navigation and battle
-            gym_Puzzle_01(env.console, context);
-        }
-    );
-}
+    void AutoStory_Checkpoint_006::run_checkpoint(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) const {
+        Checkpoint_006(env, context, options, stats);
+    }
 
 
+    void Checkpoint_006(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) {
+        checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
+            [&](size_t /*attempt*/) {
+                oreburgh_gate_to_first_gym(env, env.console, context);
+                //#. Oreburgh Gym navigation and battle
+                gym_Puzzle_01(env.console, context);
+                
+            }
+        );
+    }
+
+   
+    
 }
 }
 }

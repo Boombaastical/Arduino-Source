@@ -202,12 +202,6 @@ void mash_until_dialogue_ends(
     Button button = BUTTON_B,
     Milliseconds timeout = std::chrono::seconds(60)
 );
-<<<<<<< HEAD
-void use_potion_first_pokemon(
-    VideoStream& stream,
-    ProControllerContext& context
-);
-=======
 
 //  Open the bag, navigate to the repel compartment tab, and use a repel.
 //  Returns false if the repel compartment tab could not be found.
@@ -234,7 +228,10 @@ bool fly_to(
     const std::string& place
 );
 
->>>>>>> c779b4c50c4223905aee22aaf45c9e8391ea10c6
+void use_potion_first_pokemon(
+    VideoStream& stream,
+    ProControllerContext& context
+);
 
 }
 }

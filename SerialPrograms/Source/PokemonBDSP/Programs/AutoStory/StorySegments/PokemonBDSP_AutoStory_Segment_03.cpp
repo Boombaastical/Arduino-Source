@@ -16,6 +16,27 @@ using namespace std::chrono_literals;
 namespace PokemonAutomation{
 namespace NintendoSwitch{
 namespace PokemonBDSP{
+    void eterna_gym_to_jupiter(VideoStream& stream, ProControllerContext& context) {
+
+    }
+    void jupiter_to_coronet(VideoStream& stream, ProControllerContext& context) {
+
+    }
+    void coronet1(VideoStream& stream, ProControllerContext& context) {
+
+    }
+    void coronet_to_heartholme(VideoStream& stream, ProControllerContext& context) {
+
+    }
+    void heartholme_to_lost_tower(VideoStream& stream, ProControllerContext& context) {
+
+    }
+    static void lost_tower(VideoStream& stream, ProControllerContext& context) {
+
+    }
+    void lost_tower_to_veilstone_gym(VideoStream& stream, ProControllerContext& context) {
+
+    }
 
 static void gym_Puzzle_03(VideoStream& stream, ProControllerContext& context){
 
@@ -256,28 +277,31 @@ void AutoStory_Segment_03::run_segment(
     context.wait_for_all_requests();
     env.console.log("Start Segment " + name(), COLOR_ORANGE);
 
-    AutoStory_Checkpoint_22().run_checkpoint(env, context, options, stats);
-
+    AutoStory_Checkpoint_011().run_checkpoint(env, context, options, stats);
+    AutoStory_Checkpoint_012().run_checkpoint(env, context, options, stats);
+    AutoStory_Checkpoint_013().run_checkpoint(env, context, options, stats);
+    AutoStory_Checkpoint_014().run_checkpoint(env, context, options, stats);
+    AutoStory_Checkpoint_015().run_checkpoint(env, context, options, stats);
     context.wait_for_all_requests();
     env.console.log("End Segment " + name(), COLOR_GREEN);
 }
 
 
-std::string AutoStory_Checkpoint_22::name()       const{ return "003 - " + AutoStory_Segment_03().name(); }
-std::string AutoStory_Checkpoint_22::start_text() const{ return "Second Gym Badge acquired (Eterna City)."; }
-std::string AutoStory_Checkpoint_22::end_text()   const{ return "Third Gym Badge acquired (Hearthome City)."; }
+std::string AutoStory_Checkpoint_011::name()       const{ return "003 - " + AutoStory_Segment_03().name(); }
+std::string AutoStory_Checkpoint_011::start_text() const{ return "Second Gym Badge acquired (Eterna City)."; }
+std::string AutoStory_Checkpoint_011::end_text()   const{ return "Third Gym Badge acquired (Hearthome City)."; }
 
-void AutoStory_Checkpoint_22::run_checkpoint(
+void AutoStory_Checkpoint_011::run_checkpoint(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
     AutoStoryStats& stats
 ) const{
-    Checkpoint_22(env, context, options, stats);
+    Checkpoint_011(env, context, options, stats);
 }
 
 
-void Checkpoint_22(
+void Checkpoint_011(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
@@ -286,13 +310,153 @@ void Checkpoint_22(
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/){
             // TODO: implement Segment 03 gameplay logic
+            eterna_gym_to_jupiter(env, env.console, context);
+            
+        }
+    );
+}
+std::string AutoStory_Checkpoint_012::name()       const { return "003 - " + AutoStory_Segment_03().name(); }
+std::string AutoStory_Checkpoint_012::start_text() const { return "Second Gym Badge acquired (Eterna City)."; }
+std::string AutoStory_Checkpoint_012::end_text()   const { return "Third Gym Badge acquired (Hearthome City)."; }
 
+void AutoStory_Checkpoint_012::run_checkpoint(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) const {
+    Checkpoint_012(env, context, options, stats);
+}
+
+
+void Checkpoint_012(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) {
+    checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
+        [&](size_t /*attempt*/) {
+            // TODO: implement Segment 03 gameplay logic
+            jupiter_to_coronet(env, env.console, context);
+
+        }
+    );
+}
+std::string AutoStory_Checkpoint_013::name()       const { return "003 - " + AutoStory_Segment_03().name(); }
+std::string AutoStory_Checkpoint_013::start_text() const { return "Second Gym Badge acquired (Eterna City)."; }
+std::string AutoStory_Checkpoint_013::end_text()   const { return "Third Gym Badge acquired (Hearthome City)."; }
+
+void AutoStory_Checkpoint_013::run_checkpoint(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) const {
+    Checkpoint_013(env, context, options, stats);
+}
+
+
+void Checkpoint_013(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) {
+    checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
+        [&](size_t /*attempt*/) {
+            // TODO: implement Segment 03 gameplay logic
+            coronet1(env, env.console, context);
+
+        }
+    );
+}
+std::string AutoStory_Checkpoint_014::name()       const { return "003 - " + AutoStory_Segment_03().name(); }
+std::string AutoStory_Checkpoint_014::start_text() const { return "Second Gym Badge acquired (Eterna City)."; }
+std::string AutoStory_Checkpoint_014::end_text()   const { return "Third Gym Badge acquired (Hearthome City)."; }
+
+void AutoStory_Checkpoint_014::run_checkpoint(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) const {
+    Checkpoint_014(env, context, options, stats);
+}
+
+
+void Checkpoint_014(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) {
+    checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
+        [&](size_t /*attempt*/) {
+            // TODO: implement Segment 03 gameplay logic
+            coronet_to_heartholme(env, env.console, context);
+
+        }
+    );
+}
+std::string AutoStory_Checkpoint_015::name()       const { return "003 - " + AutoStory_Segment_03().name(); }
+std::string AutoStory_Checkpoint_015::start_text() const { return "Second Gym Badge acquired (Eterna City)."; }
+std::string AutoStory_Checkpoint_015::end_text()   const { return "Third Gym Badge acquired (Hearthome City)."; }
+
+void AutoStory_Checkpoint_015::run_checkpoint(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) const {
+    Checkpoint_015(env, context, options, stats);
+}
+
+
+void Checkpoint_015(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) {
+    checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
+        [&](size_t /*attempt*/) {
+            // TODO: implement Segment 03 gameplay logic
+            heartholme_to_lost_tower(env, env.console, context);
+			lost_tower(env, env.console, context);
+
+        }
+    );
+}
+std::string AutoStory_Checkpoint_016::name()       const { return "003 - " + AutoStory_Segment_03().name(); }
+std::string AutoStory_Checkpoint_016::start_text() const { return "Second Gym Badge acquired (Eterna City)."; }
+std::string AutoStory_Checkpoint_016::end_text()   const { return "Third Gym Badge acquired (Hearthome City)."; }
+
+void AutoStory_Checkpoint_016::run_checkpoint(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) const {
+    Checkpoint_016(env, context, options, stats);
+}
+
+
+void Checkpoint_016(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+) {
+    checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
+        [&](size_t /*attempt*/) {
+            // TODO: implement Segment 03 gameplay logic
+            lost_tower_to_veilstone_gym(env, env.console, context);
             //#. Veilstone Gym navigation and battle
             gym_Puzzle_03(env.console, context);
         }
     );
 }
-
 
 }
 }
