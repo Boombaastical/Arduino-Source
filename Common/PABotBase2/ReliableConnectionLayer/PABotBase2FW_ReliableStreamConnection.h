@@ -18,15 +18,9 @@
 
 #ifdef PABB2_ENABLE
 #include "PabbTime.h"
+#include "Tools/ResetListener.h"
 #else
 #include "Common/Cpp/Time.h"
-inline PokemonAutomation::WallClock pabb_current_time(){
-    return PokemonAutomation::current_time();
-}
-inline PokemonAutomation::Milliseconds pabb_milliseconds(int64_t milliseconds){
-    return PokemonAutomation::Milliseconds(milliseconds);
-}
-#define pabb_time_wrapsafe_cmplt(x, y)  ((x) < (y))
 #endif
 
 namespace PokemonAutomation{
@@ -34,7 +28,12 @@ namespace PABotBase2{
 
 
 
-class ReliableStreamConnectionFW final : public ReliableStreamConnectionPolling{
+class ReliableStreamConnectionFW final
+    : public ReliableStreamConnectionPolling
+#ifdef PABB2_ENABLE
+    , public ResetRunner
+#endif
+{
 public:
     ReliableStreamConnectionFW(UnreliableStreamConnectionPolling& unreliable_connection);
 
@@ -45,21 +44,18 @@ public:
         return m_reliable_sender.slots_used() != 0;
     }
 
+
 public:
-    virtual void reliable_send(const void* data, size_t bytes) override;
+    virtual bool enqueue_uncommitted_reliable_sends(const void* data, size_t bytes) noexcept override;
+    virtual void abort_uncommitted_reliable_sends() noexcept override;
+    virtual void commit_uncommitted_reliable_sends() noexcept override;
+
     virtual size_t reliable_recv(void* data, size_t bytes) override{
         return m_stream_coalescer.read(data, bytes);
     }
 
-    virtual bool reset_flag_set() const override{
-        return m_reset_flag;
-    }
-    virtual void clear_reset_flag() override{
-        m_reset_flag = false;
-    }
-
-    virtual bool run_events() override;
-    virtual void wait_for_event(uint16_t milliseconds) override;
+    virtual bool run_send_events(const WallDuration& timeout) override;
+    virtual bool run_recv_events(const WallDuration& timeout) override;
 
 
 public:
@@ -91,7 +87,6 @@ public:
 
 private:
     void send_oob_info_label_i32(uint8_t opcode, const char* str, uint32_t data);
-    bool iterate_retransmits();
 
 
 private:
@@ -100,11 +95,11 @@ private:
     PacketParser m_parser;
     StreamCoalescer m_stream_coalescer;
 
-    size_t m_packets_received = 0;
-
     WallClock m_last_retransmit;
 
-    bool m_reset_flag = false;
+    size_t m_packets_received = 0;
+
+    bool m_send_is_currently_full = false;
 
     //  Don't allow any stream traffic until CC is ready.
     //  The MLC layer will get stuck in a bad state if we end up between packets.

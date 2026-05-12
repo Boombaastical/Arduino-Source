@@ -75,6 +75,7 @@ RngHelper::RngHelper()
             {PokemonFRLG_RngTarget::hooh, "hooh", "Ho-oh"},
             {PokemonFRLG_RngTarget::hypno, "berryforesthypno", "Berry Forest Hypno"},
             {PokemonFRLG_RngTarget::sweetscent, "sweetscent", "Sweet Scent"},
+            {PokemonFRLG_RngTarget::rocksmash, "rocksmash", "Rock Smash"},
             {PokemonFRLG_RngTarget::fishing, "fishing", "Fishing"},
             {PokemonFRLG_RngTarget::safarizonecenter, "safarizonecenter", "Safari Zone Center (Sweet Scent)"},
             {PokemonFRLG_RngTarget::safarizoneeast, "safarizoneeast", "Safari Zone East (Sweet Scent)"},
@@ -104,11 +105,22 @@ RngHelper::RngHelper()
         LockMode::LOCK_WHILE_RUNNING,
         SeedButton::A
     )
+    , EXTRA_BUTTON(
+        "<b>Extra Button:</b><br>"
+        "Additional button presses that affect the seed.",
+        {
+            {BlackoutButton::None, "None", "None"},
+            {BlackoutButton::L, "L", "Blackout L"},
+            {BlackoutButton::R, "R", "Blackout R"},
+        },
+        LockMode::LOCK_WHILE_RUNNING,
+        BlackoutButton::None
+    )
     , SEED_DELAY(
         "<b>Seed Delay Time (ms):</b><br>"
         "The delay between starting the game and advancing past the title screen. Set this to match your target seed.",
         LockMode::LOCK_WHILE_RUNNING,
-        35000, 28000 // default, min
+        35000, 30400 // default, min
     )
     , SEED_CALIBRATION(
          "<b>Seed Calibration (ms):</b>"
@@ -137,7 +149,7 @@ RngHelper::RngHelper()
         "These pass at double the rate compared to other consoles, where every frame results in 2 advances.<br>"
         "<i>Warning: this needs to be long enough to accomodate all in-game button presses prior to the gift/encounter</i>",
         LockMode::LOCK_WHILE_RUNNING,
-        12345, 480 // default, min
+        12345, 320 // default, min
     )
     , INGAME_CALIBRATION(
         "<b>In-Game Advances Calibration:</b>"
@@ -145,12 +157,6 @@ RngHelper::RngHelper()
         "<i>Example: if your target advance was 10000 and you hit 8500, you can <b>increase</b> your calibration value by 1500.</i>",
         LockMode::UNLOCK_WHILE_RUNNING,
         0 // default
-    )
-    , USE_COPYRIGHT_TEXT(
-        "<b>Detect Copyright Text:</b>"
-        "<br>Start the seed timer only after detecting the copyright text. Can be helpful if your seeds are inconsistent.",
-        LockMode::LOCK_WHILE_RUNNING,
-        true // default
     )
     , USE_TEACHY_TV(
         "<b>Use Teachy TV:</b>"
@@ -187,13 +193,13 @@ RngHelper::RngHelper()
     PA_ADD_OPTION(TARGET);
     PA_ADD_OPTION(NUM_RESETS);
     PA_ADD_OPTION(SEED_BUTTON);
+    PA_ADD_OPTION(EXTRA_BUTTON);
     PA_ADD_OPTION(SEED_DELAY);
     PA_ADD_OPTION(SEED_CALIBRATION);
     PA_ADD_OPTION(CONTINUE_SCREEN_FRAMES);
     PA_ADD_OPTION(CONTINUE_SCREEN_CALIBRATION);
     PA_ADD_OPTION(INGAME_ADVANCES);
     PA_ADD_OPTION(INGAME_CALIBRATION);
-    PA_ADD_OPTION(USE_COPYRIGHT_TEXT);
     PA_ADD_OPTION(USE_TEACHY_TV);
     PA_ADD_OPTION(PROFILE);
     PA_ADD_OPTION(TAKE_VIDEO);
@@ -215,16 +221,27 @@ void RngHelper::program(SingleSwitchProgramEnvironment& env, ProControllerContex
     double FRAMERATE = 59.999977; // FPS
     double FRAME_DURATION = 1000 / FRAMERATE;
 
-    int64_t FIXED_SEED_OFFSET = USE_COPYRIGHT_TEXT ? -2140 : -845; // milliseconds. approximate
+    bool sweet_scent = (
+        TARGET == PokemonFRLG_RngTarget::sweetscent ||
+        TARGET == PokemonFRLG_RngTarget::rocksmash ||
+        TARGET == PokemonFRLG_RngTarget::safarizonecenter ||
+        TARGET == PokemonFRLG_RngTarget::safarizoneeast ||
+        TARGET == PokemonFRLG_RngTarget::safarizonenorth ||
+        TARGET == PokemonFRLG_RngTarget::safarizonewest ||
+        TARGET == PokemonFRLG_RngTarget::safarizonesurf
+    );
+
+    const int64_t FIXED_SEED_OFFSET = -845; // milliseconds, approximate
+    const int64_t FIXED_ADVANCES_OFFSET = sweet_scent ? -352 : 160; // frames, approximate
 
     while (!shiny_found){
         // prepare timings
         uint64_t TOTAL_SEED_DELAY = SEED_DELAY + SEED_CALIBRATION + FIXED_SEED_OFFSET;
 
-        double MODIFIED_INGAME_ADVANCES = INGAME_ADVANCES + INGAME_CALIBRATION;
+        double MODIFIED_INGAME_ADVANCES = INGAME_ADVANCES + INGAME_CALIBRATION + FIXED_ADVANCES_OFFSET;
         if (MODIFIED_INGAME_ADVANCES < 0) {
            OperationFailedException::fire(
-                ErrorReport::SEND_ERROR_REPORT,
+                ErrorReport::NO_ERROR_REPORT,
                 "In-game advances cannot be negative. Check your in-game advances and calibration.",
                 env.console
             ); 
@@ -239,32 +256,31 @@ void RngHelper::program(SingleSwitchProgramEnvironment& env, ProControllerContex
             || TARGET == PokemonFRLG_RngTarget::safarizonefish 
         );
 
-        uint64_t TEACHY_TV_BUFFER = SAFARI_ZONE ? 12000 : 5000; // Safari zone targets need extra time to walk to the right position
+        uint64_t TEACHY_TV_BUFFER = SAFARI_ZONE ? 20000 : 10000; // Safari zone targets need extra time to walk to the right position
 
-        bool should_use_teachy_tv = USE_TEACHY_TV && (TARGET != PokemonFRLG_RngTarget::starters) && (MODIFIED_INGAME_ADVANCES > TEACHY_TV_BUFFER); // don't use Teachy TV for short in-game advance targets
+        bool should_use_teachy_tv = USE_TEACHY_TV && (MODIFIED_INGAME_ADVANCES > TEACHY_TV_BUFFER); // don't use Teachy TV for short in-game advance targets
         if (should_use_teachy_tv) {
-            TEACHY_ADVANCES = uint64_t((int)std::floor((MODIFIED_INGAME_ADVANCES - TEACHY_TV_BUFFER) / 313) * 313);
+            TEACHY_ADVANCES = uint64_t((int)std::floor((MODIFIED_INGAME_ADVANCES - TEACHY_TV_BUFFER + 7500) / 313) * 313);
         }
 
         const uint64_t CONTINUE_SCREEN_DELAY = uint64_t((CONTINUE_SCREEN_FRAMES + CONTINUE_SCREEN_CALIBRATION) * FRAME_DURATION);
         const uint64_t TEACHY_DELAY = uint64_t(TEACHY_ADVANCES * FRAME_DURATION / 313);
-        const uint64_t INGAME_DELAY = uint64_t((MODIFIED_INGAME_ADVANCES - TEACHY_ADVANCES) * FRAME_DURATION / 2) - (should_use_teachy_tv ? 13700 : 0);
+        const uint64_t INGAME_DELAY = uint64_t((MODIFIED_INGAME_ADVANCES - TEACHY_ADVANCES) * FRAME_DURATION / 2) - (should_use_teachy_tv ? 14067 : 0);
         env.log("Continue Screen delay: " + std::to_string(CONTINUE_SCREEN_DELAY) + "ms");
         env.log("In-game delay: " + std::to_string(INGAME_DELAY) + "ms");
         env.log("Teachy TV delay: " + std::to_string(TEACHY_DELAY) + "ms");
-        env.log("Total time: " + std::to_string(SEED_DELAY + SEED_CALIBRATION + FIXED_SEED_OFFSET + CONTINUE_SCREEN_DELAY + INGAME_DELAY + TEACHY_DELAY) + "ms");
+        env.log("Total time: " + std::to_string(TOTAL_SEED_DELAY + CONTINUE_SCREEN_DELAY + INGAME_DELAY + TEACHY_DELAY) + "ms");
 
         check_timings(env.console, TARGET, TOTAL_SEED_DELAY, CONTINUE_SCREEN_DELAY, INGAME_DELAY, SAFARI_ZONE);
 
         
         // handle the blind part
-        if (USE_COPYRIGHT_TEXT){
-            reset_and_detect_copyright_text(env.console, context, PROFILE);
-            env.log("Starting blind button presses...");
-            perform_blind_sequence(context, TARGET, SEED_BUTTON, TOTAL_SEED_DELAY, CONTINUE_SCREEN_DELAY, TEACHY_DELAY, INGAME_DELAY, SAFARI_ZONE);
-        }else{
-            reset_and_perform_blind_sequence(env.console, context, TARGET, SEED_BUTTON, TOTAL_SEED_DELAY, CONTINUE_SCREEN_DELAY, TEACHY_DELAY, INGAME_DELAY, SAFARI_ZONE, PROFILE);
-        }
+        reset_and_perform_blind_sequence(
+            env.console, context, TARGET, 
+            SEED_BUTTON, EXTRA_BUTTON, TOTAL_SEED_DELAY, 
+            CONTINUE_SCREEN_DELAY, TEACHY_DELAY, INGAME_DELAY, 
+            SAFARI_ZONE, PROFILE
+        );
         env.log("Blind button presses complete.");
         stats.resets++;
 

@@ -20,18 +20,18 @@ namespace SerialPABotBase{
 
 const std::map<pabb_ProgramID, uint32_t>& SUPPORTED_DEVICES(){
     static const std::map<pabb_ProgramID, uint32_t> database{
-        {PABB_PID_UNSPECIFIED,                  2025090400},
+        {PABB_PID_UNSPECIFIED,                  2025120815},
         {PABB_PID_PABOTBASE_ArduinoUnoR3,       2025090303},
         {PABB_PID_PABOTBASE_ArduinoLeonardo,    2025090303},
         {PABB_PID_PABOTBASE_ProMicro,           2025090303},
         {PABB_PID_PABOTBASE_Teensy2,            2025090303},
         {PABB_PID_PABOTBASE_TeensyPP2,          2025090303},
-        {PABB_PID_PABOTBASE_ESP32,              2025120800},
-        {PABB_PID_PABOTBASE_ESP32S3,            2025120800},
-        {PABB_PID_PABOTBASE_Pico1W_USB,         2025120800},
-        {PABB_PID_PABOTBASE_Pico1W_UART,        2025120800},
-        {PABB_PID_PABOTBASE_Pico2W_USB,         2025120800},
-        {PABB_PID_PABOTBASE_Pico2W_UART,        2025120800},
+        {PABB_PID_PABOTBASE_ESP32,              2025120815},
+        {PABB_PID_PABOTBASE_ESP32S3,            2025120815},
+        {PABB_PID_PABOTBASE_Pico1W_USB,         2025120815},
+        {PABB_PID_PABOTBASE_Pico1W_UART,        2025120815},
+        {PABB_PID_PABOTBASE_Pico2W_USB,         2025120815},
+        {PABB_PID_PABOTBASE_Pico2W_UART,        2025120815},
     };
     return database;
 }
@@ -54,13 +54,14 @@ const std::map<uint32_t, std::map<pabb_ProgramID, uint8_t>>& SUPPORTED_VERSIONS(
 //  PABotBase 2
 //
 
+//  These version #'s are for the MLC layer.
 const std::map<pabb_ProgramID, uint32_t>& SUPPORTED_DEVICES2(){
     static const std::map<pabb_ProgramID, uint32_t> database{
-        {PABB_PID_UNSPECIFIED,              2026041100},
-        {PABB_PID_PABOTBASE_ESP32,          2026041100},
-        {PABB_PID_PABOTBASE_ESP32S3,        2026041100},
-        {PABB_PID_PABOTBASE_Pico1,          2026041100},
-        {PABB_PID_PABOTBASE_Pico2,          2026041100},
+        {PABB_PID_UNSPECIFIED,              2026050901},
+        {PABB_PID_PABOTBASE_ESP32,          2026050901},
+        {PABB_PID_PABOTBASE_ESP32S3,        2026050901},
+        {PABB_PID_PABOTBASE_Pico1,          2026050901},
+        {PABB_PID_PABOTBASE_Pico2,          2026050901},
     };
     return database;
 }

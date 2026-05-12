@@ -48,6 +48,7 @@ const std::set<std::string> TOKENS{
     "e8d168bc482e96553ea9f9ecaea5a817474dbccc2a6a228a6bde67f2b2aa2889", //  James' token.
     "7555b7c63481cad42306718c67e7f9def5bfd1da8f6cd299ccd3d7dc95f307ae", //  Kuro's token.
     "3d475b46d121fc24559d100de2426feaa53cd6578aac2817c4857a610ccde2dd", //  kichi's token.
+    "9b41db8175b5f248a78e738c7bd63a36e33b57953cb4e80ccdd13c2a7e892eec", //  Dalton's token.
 };
 
 
@@ -226,6 +227,18 @@ GlobalSettings::GlobalSettings()
     , PERFORMANCE(CONSTRUCT_TOKEN)
     , AUDIO_PIPELINE(CONSTRUCT_TOKEN)
     , VIDEO_PIPELINE(CONSTRUCT_TOKEN)
+    , COMMAND_QUEUE_LIMIT(
+        "<b>Maximum Command Queue Size:</b><br>"
+        "Do not queue more than this many commands to the controller at once. "
+        "Larger values will tolerate longer connection interrupts, but may increase cancellation latency after a burst of commands.",
+        LockMode::LOCK_WHILE_RUNNING,
+        64, 4, 255
+    )
+    , DEVICE_LOGGING_FLAG(
+        "<b>Configure Device-Specific Debug Logging:</b>",
+        LockMode::LOCK_WHILE_RUNNING,
+        0
+    )
     , ENABLE_LIFETIME_SANITIZER0(
         "<b>Enable Lifetime Sanitizer: (for debugging)</b><br>"
         "Check for C++ object lifetime violations. Terminate program with stack dump if violations are found. "
@@ -277,6 +290,8 @@ GlobalSettings::GlobalSettings()
 
     PA_ADD_OPTION(AUDIO_PIPELINE);
     PA_ADD_OPTION(VIDEO_PIPELINE);
+    PA_ADD_OPTION(COMMAND_QUEUE_LIMIT);
+    PA_ADD_OPTION(DEVICE_LOGGING_FLAG);
 
     PA_ADD_OPTION(ENABLE_LIFETIME_SANITIZER0);
 
@@ -301,8 +316,12 @@ void GlobalSettings::load_json(const JsonValue& json){
     const bool developer_mode = PreloadSettings::instance().DEVELOPER_MODE;
     BatchOption::load_json(json);
 
-    USE_PADDLE_OCR.set_visibility(developer_mode ? ConfigOptionState::ENABLED : ConfigOptionState::HIDDEN);
-    SAVE_DEBUG_VIDEOS_ON_SWITCH.set_visibility(developer_mode ? ConfigOptionState::ENABLED : ConfigOptionState::HIDDEN);
+    ConfigOptionState devmode_visibility = developer_mode
+        ? ConfigOptionState::ENABLED
+        : ConfigOptionState::HIDDEN;
+    USE_PADDLE_OCR.set_visibility(devmode_visibility);
+    SAVE_DEBUG_VIDEOS_ON_SWITCH.set_visibility(devmode_visibility);
+    DEVICE_LOGGING_FLAG.set_visibility(devmode_visibility);
 
     //  Remake this to update the color.
     m_discord_settings.set_text(

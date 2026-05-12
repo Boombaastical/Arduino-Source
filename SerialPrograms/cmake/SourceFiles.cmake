@@ -744,6 +744,7 @@ file(GLOB LIBRARY_SOURCES
     Source/Controllers/JoystickTools.h
     Source/Controllers/NullController.cpp
     Source/Controllers/NullController.h
+    Source/Controllers/RumbleListener.h
     Source/Controllers/PABotBase2/PABotBase2_CommandQueueManager.cpp
     Source/Controllers/PABotBase2/PABotBase2_CommandQueueManager.h
     Source/Controllers/PABotBase2/PABotBase2_Connection.cpp
@@ -1488,6 +1489,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonBDSP/Resources/PokemonBDSP_NameDatabase.h
     Source/PokemonFRLG/Inference/Dialogs/PokemonFRLG_BattleDialogs.cpp
     Source/PokemonFRLG/Inference/Dialogs/PokemonFRLG_BattleDialogs.h
+    Source/PokemonFRLG/Inference/Dialogs/PokemonFRLG_PartyDialogs.cpp
+    Source/PokemonFRLG/Inference/Dialogs/PokemonFRLG_PartyDialogs.h
     Source/PokemonFRLG/Inference/Dialogs/PokemonFRLG_DialogDetector.cpp
     Source/PokemonFRLG/Inference/Dialogs/PokemonFRLG_DialogDetector.h
     Source/PokemonFRLG/Inference/Dialogs/PokemonFRLG_PrizeSelectDetector.cpp
@@ -1498,6 +1501,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_StartMenuDetector.h
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_SummaryDetector.cpp
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_SummaryDetector.h
+    Source/PokemonFRLG/Inference/Menus/PokemonFRLG_BagDetector.cpp
+    Source/PokemonFRLG/Inference/Menus/PokemonFRLG_BagDetector.h
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_LoadMenuDetector.cpp
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_LoadMenuDetector.h
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_PartyHeldItemDetector.cpp
@@ -1506,6 +1511,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_PartyMenuDetector.h
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_TrainerCardDetector.cpp
     Source/PokemonFRLG/Inference/Menus/PokemonFRLG_TrainerCardDetector.h
+    Source/PokemonFRLG/Inference/Menus/PokemonFRLG_DexRegistrationDetector.cpp
+    Source/PokemonFRLG/Inference/Menus/PokemonFRLG_DexRegistrationDetector.h
     Source/PokemonFRLG/Inference/Sounds/PokemonFRLG_ShinySoundDetector.cpp
     Source/PokemonFRLG/Inference/Sounds/PokemonFRLG_ShinySoundDetector.h
     Source/PokemonFRLG/Inference/PokemonFRLG_BattleSelectionArrowDetector.cpp
@@ -1520,6 +1527,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonFRLG/Inference/PokemonFRLG_StatsReader.h
     Source/PokemonFRLG/Inference/PokemonFRLG_BattleLevelUpReader.cpp
     Source/PokemonFRLG/Inference/PokemonFRLG_BattleLevelUpReader.h
+    Source/PokemonFRLG/Inference/PokemonFRLG_PartyLevelUpReader.cpp
+    Source/PokemonFRLG/Inference/PokemonFRLG_PartyLevelUpReader.h
     Source/PokemonFRLG/Inference/PokemonFRLG_TrainerIdReader.cpp
     Source/PokemonFRLG/Inference/PokemonFRLG_TrainerIdReader.h
     Source/PokemonFRLG/Inference/PokemonFRLG_BattlePokemonDetector.cpp
@@ -1564,12 +1573,30 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_BlindNavigation.h
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngNavigation.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngDisplays.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngDisplays.h
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_HardReset.cpp
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_HardReset.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngStatsDatabase.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngStatsDatabase.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_LocationsDatabase.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_LocationsDatabase.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_EncountersDatabase.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_EncountersDatabase.h
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SidHelper.cpp
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SidHelper.h
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngHelper.cpp
     Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngHelper.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_StarterRng.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_StarterRng.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_GiftRng.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_GiftRng.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_StaticRng.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_StaticRng.h
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_WildRng.cpp
+    Source/PokemonFRLG/Programs/RngManipulation/PokemonFRLG_WildRng.h
     Source/PokemonFRLG/Programs/TestPrograms/PokemonFRLG_SoundListener.cpp
     Source/PokemonFRLG/Programs/TestPrograms/PokemonFRLG_SoundListener.h
     Source/PokemonFRLG/Programs/TestPrograms/PokemonFRLG_ReadStats.cpp
@@ -1586,12 +1613,20 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonHome/Inference/PokemonHome_BoxGenderDetector.h
     Source/PokemonHome/Inference/PokemonHome_ButtonDetector.cpp
     Source/PokemonHome/Inference/PokemonHome_ButtonDetector.h
+    Source/PokemonHome/Inference/PokemonHome_GigantamaxDetector.cpp
+    Source/PokemonHome/Inference/PokemonHome_GigantamaxDetector.h
+    Source/PokemonHome/Inference/PokemonHome_TeraTypeReader.cpp
+    Source/PokemonHome/Inference/PokemonHome_TeraTypeReader.h
     Source/PokemonHome/PokemonHome_Panels.cpp
     Source/PokemonHome/PokemonHome_Panels.h
     Source/PokemonHome/PokemonHome_Settings.cpp
     Source/PokemonHome/PokemonHome_Settings.h
+    Source/PokemonHome/Programs/PokemonHome_BoxNavigation.cpp
+    Source/PokemonHome/Programs/PokemonHome_BoxNavigation.h
     Source/PokemonHome/Programs/PokemonHome_BoxSorter.cpp
     Source/PokemonHome/Programs/PokemonHome_BoxSorter.h
+    Source/PokemonHome/Programs/PokemonHome_BoxSorterLivingDex.cpp
+    Source/PokemonHome/Programs/PokemonHome_BoxSorterLivingDex.h
     Source/PokemonHome/Programs/PokemonHome_GenerateNameOCR.cpp
     Source/PokemonHome/Programs/PokemonHome_GenerateNameOCR.h
     Source/PokemonHome/Programs/PokemonHome_PageSwap.cpp

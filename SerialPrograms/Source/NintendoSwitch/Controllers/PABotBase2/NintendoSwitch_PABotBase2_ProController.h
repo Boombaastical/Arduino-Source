@@ -30,7 +30,10 @@ public:
         ControllerType controller_type
     )
         : ProController(logger)
-        , PABotBase2_OemController(logger, connection, controller_type)
+        , PABotBase2_OemController(
+            logger, connection, controller_type,
+            [this](double magnitude){ on_rumble(magnitude); }
+        )
     {}
     ~PABotBase2_ProController(){
         PABotBase2_OemController::stop();
@@ -44,6 +47,9 @@ public:
     }
     virtual bool is_ready() const override{
         return PABotBase2_Controller::is_ready();
+    }
+    virtual ControllerPlayerNumber get_player_number(Cancellable& cancellable) override{
+        return PABotBase2_OemController::get_player_number(cancellable);
     }
 
 
@@ -69,8 +75,8 @@ public:
     virtual bool cancel_all_commands(WallDuration timeout) override{
         return PABotBase2_Controller::cancel_all_commands(timeout);
     }
-    virtual void replace_on_next_command(Cancellable* cancellable) override{
-        PABotBase2_Controller::replace_on_next_command(cancellable);
+    virtual void replace_on_next_command() override{
+        PABotBase2_Controller::replace_on_next_command();
     }
 
     virtual void wait_for_all(Cancellable* cancellable) override{

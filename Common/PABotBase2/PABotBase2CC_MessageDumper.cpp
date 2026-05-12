@@ -74,11 +74,6 @@ std::string tostr(const PacketHeader* header){
         str += ", bytes = " + std::to_string(((const PacketHeader_u16*)header)->data);
         return str;
 
-    case PABB2_CONNECTION_OPCODE_INFO_STREAM_DEAD:
-        str += "PABB2_CONNECTION_OPCODE_INFO_STREAM_DEAD: seqnum = ";
-        str += std::to_string(header->seqnum);
-        str += ", offset = " + std::to_string(((const PacketHeaderData*)header)->stream_offset);
-        return str;
     case PABB2_CONNECTION_OPCODE_ASK_STREAM_DATA:
         str += "PABB2_CONNECTION_OPCODE_ASK_STREAM_DATA: seqnum = ";
         str += std::to_string(header->seqnum);
@@ -93,6 +88,24 @@ std::string tostr(const PacketHeader* header){
         str += "PABB2_CONNECTION_OPCODE_RET_STREAM: seqnum = ";
         str += std::to_string(header->seqnum);
         str += ", offset = " + std::to_string(((const PacketHeaderData*)header)->stream_offset);
+        return str;
+
+    case PABB2_CONNECTION_OPCODE_INFO_STREAM_DEAD:
+        str += "PABB2_CONNECTION_OPCODE_INFO_STREAM_DEAD: seqnum = ";
+        str += std::to_string(header->seqnum);
+        str += ", offset = " + std::to_string(((const PacketHeaderData*)header)->stream_offset);
+        return str;
+    case PABB2_CONNECTION_OPCODE_INFO_STREAM_NOT_READY:
+        str += "PABB2_CONNECTION_OPCODE_INFO_STREAM_NOT_READY: seqnum = ";
+        str += std::to_string(header->seqnum);
+        return str;
+    case PABB2_CONNECTION_OPCODE_INFO_STREAM_SEND_FULL:
+        str += "PABB2_CONNECTION_OPCODE_INFO_STREAM_SEND_FULL: seqnum = ";
+        str += std::to_string(header->seqnum);
+        return str;
+    case PABB2_CONNECTION_OPCODE_INFO_STREAM_RECV_FULL:
+        str += "PABB2_CONNECTION_OPCODE_INFO_STREAM_RECV_FULL: seqnum = ";
+        str += std::to_string(header->seqnum);
         return str;
 
     case PABB2_CONNECTION_OPCODE_INFO:
@@ -125,7 +138,7 @@ std::string tostr(const PacketHeader* header){
         str += ", data = " + std::to_string((int32_t)((const PacketHeader_u32*)header)->data);
         return str;
     case PABB2_CONNECTION_OPCODE_INFO_BINARY:{
-        str += "LOG_BIN:";
+        str += "LOG_BIN: ";
         str += tostr_hexbytes(header + 1, header->packet_bytes - sizeof(PacketHeader) - sizeof(uint32_t));
         return str;
     }
@@ -308,6 +321,18 @@ MessageLogger::MessageLogger(){
             return str;
         }
     );
+    add_message_min_length<Message_u32>(
+        "PABB2_MESSAGE_OPCODE_RET_U32_DATA",
+        PABB2_MESSAGE_OPCODE_RET_U32_DATA,
+        false,
+        [](const Message_u32* header){
+            std::string str;
+            str += "id = " + std::to_string(header->id);
+            str += ", u32 = " + std::to_string(header->data);
+            str += ", data = " + tostr_hexbytes(header + 1, header->message_bytes - sizeof(Message_u32));
+            return str;
+        }
+    );
 
 
     add_message<MessageHeader>(
@@ -357,6 +382,17 @@ MessageLogger::MessageLogger(){
         [](const MessageHeader* header){
             std::string str;
             str += "id = " + std::to_string(header->id);
+            return str;
+        }
+    );
+    add_message<Message_u32>(
+        "PABB2_MESSAGE_OPCODE_SET_LOGGING_FLAG",
+        PABB2_MESSAGE_OPCODE_SET_LOGGING_FLAG,
+        true,
+        [](const Message_u32* message){
+            std::string str;
+            str += "id = " + std::to_string(message->id);
+            str += ", flag = " + tostr_hex(message->data);
             return str;
         }
     );
@@ -437,7 +473,16 @@ MessageLogger::MessageLogger(){
         }
     );
 
-
+    add_message<MessageHeader>(
+        "PABB2_MESSAGE_OPCODE_CQ_COMMAND_DROPPED",
+        PABB2_MESSAGE_OPCODE_CQ_COMMAND_DROPPED,
+        true,
+        [](const MessageHeader* header){
+            std::string str;
+            str += "id = " + std::to_string(header->id);
+            return str;
+        }
+    );
     add_message<MessageHeader>(
         "PABB2_MESSAGE_OPCODE_CQ_CANCEL",
         PABB2_MESSAGE_OPCODE_CQ_CANCEL,
@@ -477,6 +522,7 @@ void MessageLogger::add_message(
     std::function<bool(const MessageHeader*)> should_log,
     std::function<std::string(const MessageHeader*)> to_str
 ){
+    std::lock_guard<Mutex> lg(m_lock);
     auto ret = m_converters.emplace(
         opcode,
         MessagePrinter{
@@ -501,6 +547,7 @@ void MessageLogger::add_message(
 
 
 std::string MessageLogger::to_str(const MessageHeader* message) const{
+    std::lock_guard<Mutex> lg(m_lock);
     uint8_t opcode = message->opcode;
     auto iter = m_converters.find(opcode);
     if (iter == m_converters.end()){
@@ -514,6 +561,7 @@ void MessageLogger::log_send(
     const MessageHeader* message,
     Color color
 ) const noexcept{
+    std::lock_guard<Mutex> lg(m_lock);
     try{
         auto iter = m_converters.find(message->opcode);
         if (iter == m_converters.end()){
@@ -537,6 +585,7 @@ void MessageLogger::log_recv(
     const MessageHeader* message,
     Color color
 ) const noexcept{
+    std::lock_guard<Mutex> lg(m_lock);
     try{
         auto iter = m_converters.find(message->opcode);
         if (iter == m_converters.end()){
@@ -544,6 +593,7 @@ void MessageLogger::log_recv(
                 "[MLC]: Receive: (0x" + tostr_hex(message->opcode) + ") Unknown Opcode",
                 COLOR_RED
             );
+            return;
         }
         if (always_log || iter->second.should_log(message)){
             logger.log(

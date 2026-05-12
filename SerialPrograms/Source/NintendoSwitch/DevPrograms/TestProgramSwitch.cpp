@@ -173,6 +173,8 @@
 #include "CommonTools/OCR/OCR_RawPaddleOCR.h"
 #include "CommonTools/Images/ImageTools.h"
 #include "PokemonFRLG/Inference/PokemonFRLG_BattleSelectionArrowDetector.h"
+#include "Controllers/RumbleListener.h"
+#include "PokemonSwSh/Inference/PokemonSwSh_SelectionArrowFinder.h"
 
 
 
@@ -304,18 +306,23 @@ void TestProgram::on_press(){
 
 
 
+
+
+
+
+
 void TestProgram::program(MultiSwitchProgramEnvironment& env, CancellableScope& scope){
     using namespace Kernels;
     using namespace Kernels::Waterfill;
     using namespace OCR;
     using namespace NintendoSwitch;
     using namespace Pokemon;
-//    using namespace PokemonSwSh;
+    using namespace PokemonSwSh;
 //    using namespace PokemonBDSP;
 //    using namespace PokemonLA;
 //    using namespace PokemonSV;
 //    using namespace PokemonLZA;
-    using namespace PokemonFRLG;
+//    using namespace PokemonFRLG;
 
     [[maybe_unused]] Logger& logger = env.logger();
     [[maybe_unused]] ConsoleHandle& console = env.consoles[0];
@@ -326,6 +333,39 @@ void TestProgram::program(MultiSwitchProgramEnvironment& env, CancellableScope& 
     // JoyconContext context(scope, console.controller<JoyconController>());
     VideoOverlaySet overlays(overlay);
 
+
+    auto snapshot = feed.snapshot();
+
+    SelectionArrowFinder arrow(overlay, {0.462377, 0.332039, 0.388222, 0.640777});
+
+    cout << arrow.detect(snapshot) << endl;
+
+    auto arrows = arrow.last_detection();
+    if (!arrows.empty()){
+        cout << arrows[0].y << endl;
+    }
+
+//    WhiteDialogBoxDetector detector;
+//    detector.make_overlays(overlays);
+//    cout << detector.detect(snapshot) << endl;
+
+
+#if 0
+    RumbleWatcher<ProController> rumble(context, 200);
+    int ret = wait_until(
+        console, context,
+        WallClock::max(),
+        {rumble}
+    );
+    if (ret == 0){
+        cout << "Detected rumble magnitude: " << rumble.max_magnitude() << endl;
+    }else{
+        cout << "Did not detect anything." << endl;
+    }
+#endif
+
+
+#if 0
     auto snapshot = feed.snapshot();
 
     BattleSelectionArrowDetector detector(COLOR_RED, &overlay, SafariBattleMenuOption::BALL);
@@ -333,6 +373,7 @@ void TestProgram::program(MultiSwitchProgramEnvironment& env, CancellableScope& 
     detector.make_overlays(overlays);
 
     cout << detector.detect(snapshot) << endl;
+#endif
 
 
 #if 0
