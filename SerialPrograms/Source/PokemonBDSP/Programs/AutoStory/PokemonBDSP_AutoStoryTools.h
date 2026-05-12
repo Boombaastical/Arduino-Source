@@ -229,7 +229,6 @@ bool fly_to(
     const std::string& place
 );
 
-<<<<<<< HEAD
 // Opens the X-menu from the overworld, navigates the cursor to `target`, and presses A.
 // num_icons: 5 (early-game layout) or 8 (late-game layout).
 void open_menu(
@@ -239,12 +238,10 @@ void open_menu(
     int num_icons
 );
 
-=======
 void use_potion_first_pokemon(
     VideoStream& stream,
     ProControllerContext& context
 );
->>>>>>> e43fd8c2b8cd39c4f34aa1143deb677437db2919
 
 }
 }
