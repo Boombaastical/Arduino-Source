@@ -18,6 +18,7 @@
 #include "Programs/General/PokemonLA_PokedexTasksReader.h"
 #include "Programs/General/PokemonLA_RamanasIslandCombee.h"
 #include "Programs/General/PokemonLA_ApplyGrits.h"
+#include "Programs/General/PokemonLA_TreeShaker.h"
 
 #include "Programs/Trading/PokemonLA_SelfBoxTrade.h"
 #include "Programs/Trading/PokemonLA_SelfTouchTrade.h"
@@ -72,6 +73,7 @@ std::vector<PanelEntry> PanelListFactory::make_panels() const{
     ret.emplace_back(make_single_switch_program<ApplyGrits_Descriptor, ApplyGrits>());
     ret.emplace_back(make_single_switch_program<PokedexTasksReader_Descriptor, PokedexTasksReader>());
     ret.emplace_back(make_single_switch_program<RamanasCombeeFinder_Descriptor, RamanasCombeeFinder>());
+    ret.emplace_back(make_single_switch_program<TreeShaker_Descriptor, TreeShaker>());
 
     ret.emplace_back("---- Trading ----");
     ret.emplace_back(make_multi_switch_program<SelfBoxTrade_Descriptor, SelfBoxTrade>());

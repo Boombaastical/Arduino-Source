@@ -1671,6 +1671,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonLA/Inference/PokemonLA_OverworldDetector.h
     Source/PokemonLA/Inference/PokemonLA_StatusInfoScreenDetector.cpp
     Source/PokemonLA/Inference/PokemonLA_StatusInfoScreenDetector.h
+    Source/PokemonLA/Inference/PokemonLA_TreeShakeDetector.cpp
+    Source/PokemonLA/Inference/PokemonLA_TreeShakeDetector.h
     Source/PokemonLA/Inference/PokemonLA_UnderAttackDetector.cpp
     Source/PokemonLA/Inference/PokemonLA_UnderAttackDetector.h
     Source/PokemonLA/Inference/PokemonLA_WildPokemonFocusDetector.cpp
@@ -1740,6 +1742,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonLA/Programs/General/PokemonLA_RamanasIslandCombee.h
     Source/PokemonLA/Programs/General/PokemonLA_SkipToFullMoon.cpp
     Source/PokemonLA/Programs/General/PokemonLA_SkipToFullMoon.h
+    Source/PokemonLA/Programs/General/PokemonLA_TreeShaker.cpp
+    Source/PokemonLA/Programs/General/PokemonLA_TreeShaker.h
     Source/PokemonLA/Programs/ML/PokemonLA_GeneratePokemonImageTrainingData.cpp
     Source/PokemonLA/Programs/ML/PokemonLA_GeneratePokemonImageTrainingData.h
     Source/PokemonLA/Programs/PokemonLA_BattleRoutines.cpp
