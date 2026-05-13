@@ -458,6 +458,35 @@ bool fly_to(
     };
     CityIconDetector watcher_2(city_icon_box);
 
+    int ret_1 = wait_until(stream, context, 3000ms, {{watcher_1}});
+    int ret_2 = wait_until(stream, context, 4000ms, {{watcher_2}});
+    if (ret_1 < 0) {
+        stream.log("A button not found, retrying...", COLOR_RED);
+    };
+    if (ret_2 < 0) {
+        stream.log(place + " not found, retrying...", COLOR_RED);
+    };
+    if (ret_1 == 0 and ret_2 == 0){
+        stream.log("Found " + place + ", flying towards it.", COLOR_GREEN);
+        BlackScreenOverWatcher flying_black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
+        int ret = run_until<ProControllerContext>(
+            stream, context,
+            [](ProControllerContext& context){
+                pbf_mash_button(context, BUTTON_A, 200000ms);
+            },
+            {{flying_black_screen}}
+        );
+        if (ret < 0){
+            stream.log("Flying to " + place + ": black screen not detected!", COLOR_RED);
+            return false;
+        } else if (ret == 0) {
+            stream.log("Flying to " + place + ": black screen detected!", COLOR_GREEN);
+            return true;
+        }
+    }
+    return false;
+}
+
 // ---------------------------------------------------------------------------
 // Arrow - Based Potion Usage Helper
 
@@ -628,35 +657,6 @@ void use_potion_first_pokemon(
         "[AutoStory] Potion helper complete.",
         COLOR_GREEN
     );
-}
-
-    int ret_1 = wait_until(stream, context, 3000ms, {{watcher_1}});
-    int ret_2 = wait_until(stream, context, 4000ms, {{watcher_2}});
-    if (ret_1 < 0) {
-        stream.log("A button not found, retrying...", COLOR_RED);
-    };
-    if (ret_2 < 0) {
-        stream.log(place + " not found, retrying...", COLOR_RED);
-    };
-    if (ret_1 == 0 and ret_2 == 0){
-        stream.log("Found " + place + ", flying towards it.", COLOR_GREEN);
-        BlackScreenOverWatcher flying_black_screen(COLOR_RED, {0.1, 0.1, 0.8, 0.8});
-        int ret = run_until<ProControllerContext>(
-            stream, context,
-            [](ProControllerContext& context){
-                pbf_mash_button(context, BUTTON_A, 200000ms);
-            },
-            {{flying_black_screen}}
-        );
-        if (ret < 0){
-            stream.log("Flying to " + place + ": black screen not detected!", COLOR_RED);
-            return false;
-        } else if (ret == 0) {
-            stream.log("Flying to " + place + ": black screen detected!", COLOR_GREEN);
-            return true;
-        }
-    }
-    return false;
 }
 
 

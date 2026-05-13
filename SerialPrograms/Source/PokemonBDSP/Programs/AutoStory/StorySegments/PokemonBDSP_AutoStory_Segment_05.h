@@ -28,7 +28,7 @@ public:
     ) const override;
 };
 
-class AutoStory_Checkpoint_05 : public AutoStory_Checkpoint{
+class AutoStory_checkpoint_018 : public AutoStory_Checkpoint{
 public:
     virtual std::string name()       const override;
     virtual std::string start_text() const override;
@@ -43,7 +43,7 @@ public:
 
 // start: fourth badge acquired
 // end:   fifth Gym Badge acquired (Veilstone City)
-void checkpoint_05(
+void checkpoint_018(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,

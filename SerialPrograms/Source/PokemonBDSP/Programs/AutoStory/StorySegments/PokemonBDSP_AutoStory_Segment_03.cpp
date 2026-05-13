@@ -310,7 +310,7 @@ void Checkpoint_011(
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/){
             // TODO: implement Segment 03 gameplay logic
-            eterna_gym_to_jupiter(env, env.console, context);
+            eterna_gym_to_jupiter(env.console, context);
             
         }
     );
@@ -338,7 +338,7 @@ void Checkpoint_012(
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/) {
             // TODO: implement Segment 03 gameplay logic
-            jupiter_to_coronet(env, env.console, context);
+            jupiter_to_coronet(env.console, context);
 
         }
     );
@@ -366,7 +366,7 @@ void Checkpoint_013(
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/) {
             // TODO: implement Segment 03 gameplay logic
-            coronet1(env, env.console, context);
+            coronet1(env.console, context);
 
         }
     );
@@ -394,7 +394,7 @@ void Checkpoint_014(
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/) {
             // TODO: implement Segment 03 gameplay logic
-            coronet_to_heartholme(env, env.console, context);
+            coronet_to_heartholme(env.console, context);
 
         }
     );
@@ -414,16 +414,16 @@ void AutoStory_Checkpoint_015::run_checkpoint(
 
 
 void Checkpoint_015(
-    SingleSwitchProgramEnvironment& env,
-    ProControllerContext& context,
-    AutoStoryOptions options,
-    AutoStoryStats& stats
+	SingleSwitchProgramEnvironment& env,
+	ProControllerContext& context,
+	AutoStoryOptions options,
+	AutoStoryStats& stats
 ) {
-    checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
-        [&](size_t /*attempt*/) {
-            // TODO: implement Segment 03 gameplay logic
-            heartholme_to_lost_tower(env, env.console, context);
-			lost_tower(env, env.console, context);
+	checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
+		[&](size_t /*attempt*/) {
+			// TODO: implement Segment 03 gameplay logic
+			heartholme_to_lost_tower(env.console, context);
+			lost_tower(env.console, context);
 
         }
     );
@@ -451,7 +451,7 @@ void Checkpoint_016(
     checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
         [&](size_t /*attempt*/) {
             // TODO: implement Segment 03 gameplay logic
-            lost_tower_to_veilstone_gym(env, env.console, context);
+            lost_tower_to_veilstone_gym(env.console, context);
             //#. Veilstone Gym navigation and battle
             gym_Puzzle_03(env.console, context);
         }

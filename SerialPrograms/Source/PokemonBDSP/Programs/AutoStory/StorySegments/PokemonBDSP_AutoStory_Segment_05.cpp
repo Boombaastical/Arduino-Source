@@ -39,24 +39,24 @@ void AutoStory_Segment_05::run_segment(
     context.wait_for_all_requests();
     env.console.log("Start Segment " + name(), COLOR_ORANGE);
 
-    AutoStory_Checkpoint_05().run_checkpoint(env, context, options, stats);
+    AutoStory_checkpoint_018().run_checkpoint(env, context, options, stats);
 
     context.wait_for_all_requests();
     env.console.log("End Segment " + name(), COLOR_GREEN);
 }
 
 
-std::string AutoStory_Checkpoint_05::name()       const{ return "005 - " + AutoStory_Segment_05().name(); }
-std::string AutoStory_Checkpoint_05::start_text() const{ return "Fourth Gym Badge acquired (Pastoria City)."; }
-std::string AutoStory_Checkpoint_05::end_text()   const{ return "Fifth Gym Badge acquired (Veilstone City)."; }
+std::string AutoStory_checkpoint_018::name()       const{ return "005 - " + AutoStory_Segment_05().name(); }
+std::string AutoStory_checkpoint_018::start_text() const{ return "Fourth Gym Badge acquired (Pastoria City)."; }
+std::string AutoStory_checkpoint_018::end_text()   const{ return "Fifth Gym Badge acquired (Veilstone City)."; }
 
-void AutoStory_Checkpoint_05::run_checkpoint(
+void AutoStory_checkpoint_018::run_checkpoint(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
     AutoStoryStats& stats
 ) const{
-    checkpoint_05(env, context, options, stats);
+    checkpoint_018(env, context, options, stats);
 }
 
 static void move_back_after_unexpected_battle(
@@ -815,7 +815,7 @@ static bool go_to_the_psyduck_route_210(
     repeat_dpad(context, dpad, DPAD_LEFT, 80ms, 300ms, 3);
 
     ShortDialogWatcher talk_to_psyducks(COLOR_BLUE);
-    int ret = run_until<ProControllerContext>(
+    int ret_psyducks = run_until<ProControllerContext>(
         stream, context,
         [](ProControllerContext& context){
             ssf_press_left_joystick(context, {0, +1}, 0ms, 5000ms);
@@ -823,10 +823,10 @@ static bool go_to_the_psyduck_route_210(
         },
         {{talk_to_psyducks}}
     );
-    if (ret < 0) {
+    if (ret_psyducks < 0) {
         stream.log("go_to_the_psyduck_route_210_talk_to_psyducks: dialog box not detected!", COLOR_RED);
     }
-    if (ret == 0){
+    if (ret_psyducks == 0){
         stream.log("go_to_the_psyduck_route_210_talk_to_psyducks: talking to Psyducks!");
         pbf_mash_button(context, BUTTON_A, 28000ms);
     };
@@ -1360,7 +1360,7 @@ static bool get_into_hearthome_gym(
     return true;
 }
 
-void checkpoint_05(
+void checkpoint_018(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,

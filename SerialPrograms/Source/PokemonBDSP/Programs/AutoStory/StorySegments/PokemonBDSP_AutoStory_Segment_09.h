@@ -28,7 +28,7 @@ public:
     ) const override;
 };
 
-class AutoStory_Checkpoint_09 : public AutoStory_Checkpoint{
+class AutoStory_Checkpoint_022 : public AutoStory_Checkpoint{
 public:
     virtual std::string name()       const override;
     virtual std::string start_text() const override;
@@ -43,7 +43,7 @@ public:
 
 // start: eighth badge acquired
 // end:   Elite Four and Champion defeated, credits roll
-void checkpoint_09(
+void checkpoint_022(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,

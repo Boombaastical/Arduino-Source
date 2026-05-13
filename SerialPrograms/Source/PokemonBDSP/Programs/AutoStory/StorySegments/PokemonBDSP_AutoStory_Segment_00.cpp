@@ -135,7 +135,7 @@ namespace PokemonAutomation {
         // Navigates from player's room to Route 201 through Mom/Barry dialogues.
         // ---------------------------------------------------------------------------
 
-        void tutorial_part_1_navigation(SingleSwitchProgramEnvironment& env, 
+        static void tutorial_part_1_navigation(SingleSwitchProgramEnvironment& env, 
             VideoStream& stream, ProControllerContext& context) {
             DateTime t{ 2026, 1, 1, 0, 0, 0 };
             set_time_fast(env, context, t);
@@ -235,7 +235,7 @@ namespace PokemonAutomation {
          //  Segment 00-001 begins
          //  Navigates into lake Verity to recieve starter
          // ---------------------------------------------------------------------------
-        void starter_nav(VideoStream& stream, ProControllerContext& context) {
+        static void starter_nav(VideoStream& stream, ProControllerContext& context) {
             // re-sync control
             pbf_press_button(context, BUTTON_B, 20ms, 200ms);
             pbf_wait(context, 500ms);
@@ -286,7 +286,7 @@ namespace PokemonAutomation {
           //  Navigates from Exit of lake Verity to receipt of the Pokedex
           // ---------------------------------------------------------------------------
 
-        void tutorial_part_2_navigation(SingleSwitchProgramEnvironment& env, 
+        static void tutorial_part_2_navigation(SingleSwitchProgramEnvironment& env, 
             VideoStream& stream, ProControllerContext& context) {
             context.wait_for_all_requests();
 
@@ -342,7 +342,7 @@ namespace PokemonAutomation {
         // and send the starter to pokemon HOME.
         // ---------------------------------------------------------------------------
 
-        void tutorial_part_3_navigation(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
+        static void tutorial_part_3_navigation(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
             pbf_move_left_joystick(context, { 0.000000, -1.000000 }, 2010ms, 0ms);
 
             wait_for_dialogue(stream, context, "Phase 14 (dawn tour)");
@@ -535,7 +535,7 @@ namespace PokemonAutomation {
             // and send the starter to pokemon HOME.
             // ---------------------------------------------------------------------------
 
-        void tutorial_part_4_navigation(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
+        static void tutorial_part_4_navigation(SingleSwitchProgramEnvironment& env, VideoStream& stream, ProControllerContext& context) {
             pbf_move_left_joystick(context, { 0.000000, 1.000000 }, 2580ms, 0ms);
             pbf_wait(context, 504ms);
             pbf_move_left_joystick(context, { -1.000000, -0.000000 }, 830ms, 0ms);
@@ -748,7 +748,7 @@ namespace PokemonAutomation {
             env.console.log("End Segment " + name(), COLOR_GREEN);
         }
 
-        void checkpoint_000(
+        static void checkpoint_000(
             SingleSwitchProgramEnvironment& env,
             ProControllerContext& context,
             AutoStoryOptions options,
@@ -761,7 +761,7 @@ namespace PokemonAutomation {
                 }
             );
         }
-        void checkpoint_001(
+        static void checkpoint_001(
             SingleSwitchProgramEnvironment& env,
             ProControllerContext& context,
             AutoStoryOptions options,
@@ -782,7 +782,7 @@ namespace PokemonAutomation {
                 }
             );
         }
-        void checkpoint_002(
+        static void checkpoint_002(
             SingleSwitchProgramEnvironment& env,
             ProControllerContext& context,
             AutoStoryOptions options,
@@ -795,7 +795,7 @@ namespace PokemonAutomation {
                 }
             );
         }
-        void checkpoint_003(
+        static void checkpoint_003(
             SingleSwitchProgramEnvironment& env,
             ProControllerContext& context,
             AutoStoryOptions options,
@@ -808,7 +808,7 @@ namespace PokemonAutomation {
                 }
             );
         }
-        void checkpoint_004(
+        static void checkpoint_004(
             SingleSwitchProgramEnvironment& env,
             ProControllerContext& context,
             AutoStoryOptions options,

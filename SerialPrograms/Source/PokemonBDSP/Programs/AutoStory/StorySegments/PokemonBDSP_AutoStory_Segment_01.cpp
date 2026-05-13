@@ -81,28 +81,28 @@ namespace PokemonBDSP{
         context.wait_for_all_requests();
         env.console.log("Start Segment " + name(), COLOR_ORANGE);
 
-        AutoStory_Checkpoint_005().run_checkpoint(env, context, options, stats);
-        AutoStory_Checkpoint_006().run_checkpoint(env, context, options, stats);
+        AutoStory_checkpoint_005().run_checkpoint(env, context, options, stats);
+        AutoStory_checkpoint_006().run_checkpoint(env, context, options, stats);
         context.wait_for_all_requests();
         env.console.log("End Segment " + name(), COLOR_GREEN);
     }
 
 
-    std::string AutoStory_Checkpoint_005::name()       const { return "005 - " + AutoStory_Segment_01().name(); }
-    std::string AutoStory_Checkpoint_005::start_text() const { return "Recieved Starter back from Pokemon Home. Max leveled pokemon should have the moveset in the wiki."; }
-    std::string AutoStory_Checkpoint_005::end_text()   const { return "Standing outside the Oreburgh Gate on the Jubilife City side."; }
+    std::string AutoStory_checkpoint_005::name()       const { return "005 - " + AutoStory_Segment_01().name(); }
+    std::string AutoStory_checkpoint_005::start_text() const { return "Recieved Starter back from Pokemon Home. Max leveled pokemon should have the moveset in the wiki."; }
+    std::string AutoStory_checkpoint_005::end_text()   const { return "Standing outside the Oreburgh Gate on the Jubilife City side."; }
 
-    void AutoStory_Checkpoint_005::run_checkpoint(
+    void AutoStory_checkpoint_005::run_checkpoint(
         SingleSwitchProgramEnvironment& env,
         ProControllerContext& context,
         AutoStoryOptions options,
         AutoStoryStats& stats
     ) const {
-        Checkpoint_005(env, context, options, stats);
+        checkpoint_005(env, context, options, stats);
     }
 
 
-    void Checkpoint_005(
+    void checkpoint_005(
         SingleSwitchProgramEnvironment& env,
         ProControllerContext& context,
         AutoStoryOptions options,
@@ -110,27 +110,27 @@ namespace PokemonBDSP{
     ) {
         checkpoint_reattempt_loop(env, context, options.notif_status_update, stats,
             [&](size_t /*attempt*/) {
-                jubilife_to_oreburgh_Gate(env, env.console, context);
+                jubilife_to_oreburgh_gate(env, env.console, context);
 
             }
         );
     }
 
-    std::string AutoStory_Checkpoint_006::name()       const { return "006 - " + AutoStory_Segment_01().name(); }
-    std::string AutoStory_Checkpoint_006::start_text() const { return AutoStory_Checkpoint_005().end_text(); }
-    std::string AutoStory_Checkpoint_006::end_text()   const { return "Standing At the first gym leader after defeating him."; }
+    std::string AutoStory_checkpoint_006::name()       const { return "006 - " + AutoStory_Segment_01().name(); }
+    std::string AutoStory_checkpoint_006::start_text() const { return AutoStory_checkpoint_005().end_text(); }
+    std::string AutoStory_checkpoint_006::end_text()   const { return "Standing At the first gym leader after defeating him."; }
 
-    void AutoStory_Checkpoint_006::run_checkpoint(
+    void AutoStory_checkpoint_006::run_checkpoint(
         SingleSwitchProgramEnvironment& env,
         ProControllerContext& context,
         AutoStoryOptions options,
         AutoStoryStats& stats
     ) const {
-        Checkpoint_006(env, context, options, stats);
+        checkpoint_006(env, context, options, stats);
     }
 
 
-    void Checkpoint_006(
+    void checkpoint_006(
         SingleSwitchProgramEnvironment& env,
         ProControllerContext& context,
         AutoStoryOptions options,

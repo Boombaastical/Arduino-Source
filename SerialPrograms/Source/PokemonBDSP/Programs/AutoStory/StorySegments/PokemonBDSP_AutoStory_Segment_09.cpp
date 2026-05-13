@@ -28,28 +28,28 @@ void AutoStory_Segment_09::run_segment(
     context.wait_for_all_requests();
     env.console.log("Start Segment " + name(), COLOR_ORANGE);
 
-    AutoStory_Checkpoint_09().run_checkpoint(env, context, options, stats);
+    AutoStory_Checkpoint_022().run_checkpoint(env, context, options, stats);
 
     context.wait_for_all_requests();
     env.console.log("End Segment " + name(), COLOR_GREEN);
 }
 
 
-std::string AutoStory_Checkpoint_09::name()       const{ return "009 - " + AutoStory_Segment_09().name(); }
-std::string AutoStory_Checkpoint_09::start_text() const{ return "Eighth Gym Badge acquired (Sunyshore City)."; }
-std::string AutoStory_Checkpoint_09::end_text()   const{ return "Elite Four and Champion defeated, credits roll."; }
+std::string AutoStory_Checkpoint_022::name()       const{ return "009 - " + AutoStory_Segment_09().name(); }
+std::string AutoStory_Checkpoint_022::start_text() const{ return "Eighth Gym Badge acquired (Sunyshore City)."; }
+std::string AutoStory_Checkpoint_022::end_text()   const{ return "Elite Four and Champion defeated, credits roll."; }
 
-void AutoStory_Checkpoint_09::run_checkpoint(
+void AutoStory_Checkpoint_022::run_checkpoint(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
     AutoStoryStats& stats
 ) const{
-    checkpoint_09(env, context, options, stats);
+    checkpoint_022(env, context, options, stats);
 }
 
 
-void checkpoint_09(
+void checkpoint_022(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,

@@ -28,7 +28,7 @@ public:
     ) const override;
 };
 
-class AutoStory_Checkpoint_20 : public AutoStory_Checkpoint{
+class AutoStory_checkpoint_005 : public AutoStory_Checkpoint{
 public:
     virtual std::string name()       const override;
     virtual std::string start_text() const override;
@@ -43,13 +43,33 @@ public:
 
 // start: starter Pokemon chosen and received
 // end:   first Gym Badge acquired (Oreburgh City)
-void Checkpoint_20(
+void checkpoint_005(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
     AutoStoryStats& stats
 );
+class AutoStory_checkpoint_006 : public AutoStory_Checkpoint {
+public:
+    virtual std::string name()       const override;
+    virtual std::string start_text() const override;
+    virtual std::string end_text()   const override;
+    virtual void run_checkpoint(
+        SingleSwitchProgramEnvironment& env,
+        ProControllerContext& context,
+        AutoStoryOptions options,
+        AutoStoryStats& stats
+    ) const override;
+};
 
+// start: starter Pokemon chosen and received
+// end:   first Gym Badge acquired (Oreburgh City)
+void checkpoint_006(
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
+    AutoStoryOptions options,
+    AutoStoryStats& stats
+);
 
 }
 }

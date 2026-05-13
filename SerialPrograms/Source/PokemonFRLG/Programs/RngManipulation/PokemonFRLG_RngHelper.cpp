@@ -65,8 +65,10 @@ RngHelper::RngHelper()
             {PokemonFRLG_RngTarget::fossils, "fossils", "Omanyte / Kabuto / Aerodactyl"},
             {PokemonFRLG_RngTarget::gamecornerabra, "gamecornerabra", "Game Corner Abra"},
             {PokemonFRLG_RngTarget::gamecornerclefairy, "gamecornerclefairy", "Game Corner Clefairy"},
-            {PokemonFRLG_RngTarget::gamecornerdratini, "gamecornerdratini", "Game Corner Dratini"},
-            {PokemonFRLG_RngTarget::gamecornerbug, "gamecornerbug", "Game Corner Bug (Scyther / Pinsir)"},
+            {PokemonFRLG_RngTarget::gamecornerdratinifr, "gamecornerdratinifr", "Game Corner Dratini (FireRed)"},
+            {PokemonFRLG_RngTarget::gamecornerdratinifr, "gamecornerdratinifr", "Game Corner Dratini (LeafGreen)"},
+            {PokemonFRLG_RngTarget::gamecornerscyther, "gamecornerscyther", "Game Corner Scyther"},
+            {PokemonFRLG_RngTarget::gamecornerpinsir, "gamecornerpinsir", "Game Corner Pinsir"},
             {PokemonFRLG_RngTarget::gamecornerporygon, "gamecornerporygon", "Game Corner Porygon"},
             {PokemonFRLG_RngTarget::togepi, "togepi", "Togepi"},
             {PokemonFRLG_RngTarget::staticencounter, "staticencounter", "Static Overworld Encounters"},
@@ -118,7 +120,8 @@ RngHelper::RngHelper()
     )
     , SEED_DELAY(
         "<b>Seed Delay Time (ms):</b><br>"
-        "The delay between starting the game and advancing past the title screen. Set this to match your target seed.",
+        "The delay between starting the game and advancing past the title screen. Set this to match your target seed.<br>"
+        "<i>If using Ten Lines for seed info, select <b>Nintendo Switch 1</b> as your console even if using a Switch 2.</i>",
         LockMode::LOCK_WHILE_RUNNING,
         35000, 30400 // default, min
     )

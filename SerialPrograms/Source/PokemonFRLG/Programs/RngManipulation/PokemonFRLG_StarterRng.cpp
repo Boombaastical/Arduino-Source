@@ -98,7 +98,7 @@ StarterRng::StarterRng()
         },
         LockMode::LOCK_WHILE_RUNNING,
         Starter::bulbasaur
-    )    
+    )
     , MAX_RESETS(
         "<b>Max Resets:</b><br>",
         LockMode::UNLOCK_WHILE_RUNNING,
@@ -115,7 +115,7 @@ StarterRng::StarterRng()
         "<b>Nearby Seeds:</b><br>"
         "This box should contain a list of seeds (in order) around and including your target seed, with one seed on each line",
         LockMode::LOCK_WHILE_RUNNING,
-        "D000\n199A\n77A1\nAABC\n280C\n70FE\nB573\n02F2\n8084\nA533\nED1E", 
+        "D000\n199A\n77A1\nAABC\n280C\n70FE\nB573\n02F2\n8084\nA533\nED1E",
         "D000\n199A\n77A1\nAABC\n280C\n70FE\nB573\n02F2\n8084\nA533\nED1E",
         true
     )
@@ -141,7 +141,9 @@ StarterRng::StarterRng()
         BlackoutButton::None
     )
     , SEED_DELAY(
-        "<b>Seed Delay Time (ms):</b><br>The delay between starting the game and advancing past the title screen. Set this to match your target seed.",
+        "<b>Seed Delay Time (ms):</b><br>"
+        "The delay between starting the game and advancing past the title screen. Set this to match your target seed.<br>"
+        "<i>If using Ten Lines for seed info, select <b>Nintendo Switch 1</b> as your console even if using a Switch 2.</i>",
         LockMode::LOCK_WHILE_RUNNING,
         31338, 30400 // default, min
     )
@@ -157,7 +159,7 @@ StarterRng::StarterRng()
     // )
     , IGNORE_WILD_SHINIES(
         "<b>Ignore wild shinies</b><br>Do not stop the program when a wild shiny is encountered.",
-        LockMode::LOCK_WHILE_RUNNING, 
+        LockMode::LOCK_WHILE_RUNNING,
         false // default
     )
     , PROFILE(
@@ -168,8 +170,8 @@ StarterRng::StarterRng()
         0, 0, 8 // default, min, max
     )
     , TAKE_VIDEO(
-        "<b>Take Video:</b><br>Record a video when the shiny is found.", 
-        LockMode::LOCK_WHILE_RUNNING, 
+        "<b>Take Video:</b><br>Record a video when the shiny is found.",
+        LockMode::LOCK_WHILE_RUNNING,
         true // default
     )
     , GO_HOME_WHEN_DONE(true)
@@ -235,7 +237,7 @@ AdvObservedPokemon StarterRng::read_summary(SingleSwitchProgramEnvironment& env,
             ErrorReport::SEND_ERROR_REPORT,
             "read_summary(): Failed to detect second summary screen.",
             env.console
-        ); 
+        );
     }
 
     env.log("Reading Page 2 (Stats)...");
@@ -306,7 +308,7 @@ bool StarterRng::walk_to_rival_battle(SingleSwitchProgramEnvironment& env, ProCo
     for (int i=0; i<num_steps_to_the_left; i++){
         pbf_move_left_joystick(context, {-1, 0}, 100ms, 400ms);
     }
-    
+
     // walk down and trigger battle
     BlackScreenWatcher black_screen(COLOR_RED);
     context.wait_for_all_requests();
@@ -315,7 +317,7 @@ bool StarterRng::walk_to_rival_battle(SingleSwitchProgramEnvironment& env, ProCo
         [](ProControllerContext& context) {
             for (int i=0; i<5; i++){
                 ssf_press_left_joystick(context, {0, -1}, 0ms, 20000ms, 0ms);
-                ssf_mash1_button(context, BUTTON_B, 20000ms); 
+                ssf_mash1_button(context, BUTTON_B, 20000ms);
             }
         },
         { black_screen }
@@ -326,14 +328,14 @@ bool StarterRng::walk_to_rival_battle(SingleSwitchProgramEnvironment& env, ProCo
         send_program_recoverable_error_notification(
             env, NOTIFICATION_ERROR_RECOVERABLE,
             "walk_to_rival_battle(): failed to initiate battle."
-        ); 
+        );
     }
     return failed;
 }
 
 bool StarterRng::auto_battle_rival(
-    SingleSwitchProgramEnvironment& env, 
-    ProControllerContext& context, 
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
     AdvObservedPokemon& pokemon,
     AdvRngFilters& filters,
     const BaseStats& BASE_STATS
@@ -450,10 +452,10 @@ bool StarterRng::auto_battle_rival(
 
     env.log("Reading stats...");
     VideoSnapshot screen = env.console.video().snapshot();
-    StatReads stats = reader.read_stats(env.logger(), screen);    
+    StatReads stats = reader.read_stats(env.logger(), screen);
 
     update_filters(filters, pokemon, stats, evyield, BASE_STATS);
-    RNG_FILTERS.set(filters);   
+    RNG_FILTERS.set(filters);
 
     // exit battle
     pbf_mash_button(context, BUTTON_B, 20s);
@@ -529,8 +531,8 @@ bool StarterRng::walk_to_route1_from_home(SingleSwitchProgramEnvironment& env, P
 }
 
 int StarterRng::autolevel_on_route1(
-    SingleSwitchProgramEnvironment& env, 
-    ProControllerContext& context, 
+    SingleSwitchProgramEnvironment& env,
+    ProControllerContext& context,
     AdvObservedPokemon& pokemon,
     AdvRngFilters& filters,
     const BaseStats& BASE_STATS
@@ -566,7 +568,7 @@ int StarterRng::autolevel_on_route1(
         VideoSnapshot screen;
         int ret3;
         bool failed;
-        BattleLevelUpReader reader;          
+        BattleLevelUpReader reader;
 
         switch (ret2){
         case BattleResult::opponentfainted:
@@ -588,7 +590,7 @@ int StarterRng::autolevel_on_route1(
             switch (ret3){
             case 0:
                 env.log("Level-up stats detected. Reading stats...");
-                screen = env.console.video().snapshot();      
+                screen = env.console.video().snapshot();
                 stats = reader.read_stats(env.logger(), screen);
                 update_filters(filters, pokemon, stats, evyield, BASE_STATS);
                 RNG_FILTERS.set(filters);
@@ -640,7 +642,7 @@ void StarterRng::program(SingleSwitchProgramEnvironment& env, ProControllerConte
             ErrorReport::NO_ERROR_REPORT,
             "StarterRng(): Target Seed is missing from the list of nearby seeds.",
             env.console
-        ); 
+        );
     }
 
     env.log("Target Seed Value (base10): " + std::to_string(TARGET_SEED));
@@ -688,7 +690,7 @@ void StarterRng::program(SingleSwitchProgramEnvironment& env, ProControllerConte
     env.log("Spe: " + std::to_string(target_result.ivs.speed));
 
     RngAdvanceHistory ADVANCE_HISTORY;
-    RngCalibrationHistory CALIBRATION_HISTORY; 
+    RngCalibrationHistory CALIBRATION_HISTORY;
     uint64_t INITIAL_ADVANCES_RADIUS = 1024;
     bool wildshiny_found = false;
 
@@ -711,7 +713,7 @@ void StarterRng::program(SingleSwitchProgramEnvironment& env, ProControllerConte
                 ErrorReport::NO_ERROR_REPORT,
                 "Failed to find any matches 5 times in a row. Check your seed and advances settings.",
                 env.console
-            ); 
+            );
             break;
         }
 
@@ -744,7 +746,7 @@ void StarterRng::program(SingleSwitchProgramEnvironment& env, ProControllerConte
             SEED_CALIBRATION_FRAMES = get_seed_calibration_frames(CALIBRATION_HISTORY, SEED_VALUES, SEED_POSITION);
             ADVANCES_CALIBRATION = get_advances_calibration_frames(CALIBRATION_HISTORY, ADVANCES);
         }
-        
+
         if (CALIBRATION_HISTORY.results.size() > 0){
             AdvRngState prev_hit = CALIBRATION_HISTORY.results.back();
             double prev_csf_calibration = CALIBRATION_HISTORY.continue_screen_adjustments.back();
@@ -779,16 +781,16 @@ void StarterRng::program(SingleSwitchProgramEnvironment& env, ProControllerConte
         env.log("Continue screen duration: " + std::to_string(CONTINUE_SCREEN_DELAY) + "ms");
         env.log("In-game duration: " + std::to_string(INGAME_DELAY) + "ms");
 
-        check_timings(env.console, PokemonFRLG_RngTarget::starters, CALIBRATED_SEED_DELAY, CONTINUE_SCREEN_DELAY, INGAME_DELAY, false); 
+        check_timings(env.console, PokemonFRLG_RngTarget::starters, CALIBRATED_SEED_DELAY, CONTINUE_SCREEN_DELAY, INGAME_DELAY, false);
 
         env.log("Resetting Game...");
         reset_and_perform_blind_sequence(
-            env.console, context, PokemonFRLG_RngTarget::starters, 
-            SEED_BUTTON, EXTRA_BUTTON, CALIBRATED_SEED_DELAY, 
-            CONTINUE_SCREEN_DELAY, 0, INGAME_DELAY, 
+            env.console, context, PokemonFRLG_RngTarget::starters,
+            SEED_BUTTON, EXTRA_BUTTON, CALIBRATED_SEED_DELAY,
+            CONTINUE_SCREEN_DELAY, 0, INGAME_DELAY,
             false, PROFILE
         );
-        stats.resets++; 
+        stats.resets++;
 
         RNG_FILTERS.reset();
         RNG_CALIBRATION.reset();
@@ -823,7 +825,7 @@ void StarterRng::program(SingleSwitchProgramEnvironment& env, ProControllerConte
             CONTINUE_SCREEN_ADJUSTMENT,
             ADVANCES_CALIBRATION - CONTINUE_SCREEN_ADJUSTMENT,
             search_hits
-        );        
+        );
         bool finished = update_history(env.console, ADVANCE_HISTORY, CALIBRATION_HISTORY, MAX_HISTORY_LENGTH, SEED_CALIBRATION_FRAMES, ADVANCES_CALIBRATION, CONTINUE_SCREEN_ADJUSTMENT, search_hits, 1);
         if (finished){
             env.log("RNG search finished.");
@@ -849,9 +851,9 @@ void StarterRng::program(SingleSwitchProgramEnvironment& env, ProControllerConte
         if (pokemon.level.size() > 1){
             search_hits = get_search_results(env.console, searcher, filters, SEED_VALUES, ADVANCES, advances_radius, GENDER_THRESHOLD);
             RNG_CALIBRATION.set(
-                SEED_CALIBRATION_FRAMES * FRAME_DURATION, 
-                CONTINUE_SCREEN_ADJUSTMENT, 
-                ADVANCES_CALIBRATION, 
+                SEED_CALIBRATION_FRAMES * FRAME_DURATION,
+                CONTINUE_SCREEN_ADJUSTMENT,
+                ADVANCES_CALIBRATION,
                 search_hits
             );
             env.log("Number of search hits: " + std::to_string(search_hits.size()));
@@ -909,7 +911,7 @@ void StarterRng::program(SingleSwitchProgramEnvironment& env, ProControllerConte
                     break;
                 }
             }
-            
+
             if (pokemon.level.size() > num_levels){
                 num_levels = pokemon.level.size();
                 search_hits = get_search_results(env.console, searcher, filters, SEED_VALUES, ADVANCES, advances_radius, GENDER_THRESHOLD);

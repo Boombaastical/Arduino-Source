@@ -28,7 +28,7 @@ public:
     ) const override;
 };
 
-class AutoStory_Checkpoint_08 : public AutoStory_Checkpoint{
+class AutoStory_Checkpoint_021 : public AutoStory_Checkpoint{
 public:
     virtual std::string name()       const override;
     virtual std::string start_text() const override;
@@ -43,7 +43,7 @@ public:
 
 // start: seventh badge acquired
 // end:   legendary encounter (Spear Pillar / Mt. Coronet)
-void checkpoint_08(
+void checkpoint_021(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,
@@ -52,7 +52,7 @@ void checkpoint_08(
 
 // start: legendary encounter
 // end:   eighth Gym Badge acquired (Sunyshore City)
-void checkpoint_08_legendary(
+void checkpoint_021_legendary(
     SingleSwitchProgramEnvironment& env,
     ProControllerContext& context,
     AutoStoryOptions options,

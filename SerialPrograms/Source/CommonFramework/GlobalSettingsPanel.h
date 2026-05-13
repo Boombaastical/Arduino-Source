@@ -94,7 +94,7 @@ public:
     void load(const JsonValue& json);
 
     bool NAUGHTY_MODE = false;
-    bool DEVELOPER_MODE = true;
+    bool DEVELOPER_MODE = false;
 
     DebugSettings DEBUG;
 };
