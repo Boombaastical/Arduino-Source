@@ -1790,6 +1790,8 @@ file(GLOB LIBRARY_SOURCES
     Source/PokemonLA/Programs/TestPrograms/PokemonLA_MountDetectionTest.h
     Source/PokemonLA/Programs/TestPrograms/PokemonLA_OverworldWatcher.cpp
     Source/PokemonLA/Programs/TestPrograms/PokemonLA_OverworldWatcher.h
+    Source/PokemonLA/Programs/TestPrograms/PokemonLA_MapDetectionTest.cpp
+    Source/PokemonLA/Programs/TestPrograms/PokemonLA_MapDetectionTest.h
     Source/PokemonLA/Programs/TestPrograms/PokemonLA_SoundListener.cpp
     Source/PokemonLA/Programs/TestPrograms/PokemonLA_SoundListener.h
     Source/PokemonLA/Programs/Trading/PokemonLA_SelfBoxTrade.cpp

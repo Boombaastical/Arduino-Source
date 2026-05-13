@@ -8,7 +8,6 @@
 #define PokemonAutomation_PokemonLA_TreeShaker_H
 
 #include "Common/Cpp/Options/BoxFloatOption.h"
-#include "Common/Cpp/Options/FloatingPointOption.h"
 #include "Common/Cpp/Options/SimpleIntegerOption.h"
 #include "CommonFramework/Notifications/EventNotificationsTable.h"
 #include "NintendoSwitch/NintendoSwitch_SingleSwitchProgram.h"
@@ -31,10 +30,8 @@ public:
     virtual void program(SingleSwitchProgramEnvironment& env, ProControllerContext& context) override;
 
 private:
-    FloatingPointOption SHAKE_RMSD_THRESHOLD;
-    SimpleIntegerOption<uint16_t> SNAPSHOT_INTERVAL_MS;
-    SimpleIntegerOption<uint16_t> NUM_SAMPLES;
-    BoxFloatOption DETECTION_BOX;
+    SimpleIntegerOption<uint16_t> MAX_THROW_ATTEMPTS;
+    BoxFloatOption ITEM_NOTIFICATION_BOX;
 
     EventNotificationsOption NOTIFICATIONS;
 };

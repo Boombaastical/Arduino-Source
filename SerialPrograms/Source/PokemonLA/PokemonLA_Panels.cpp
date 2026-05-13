@@ -41,6 +41,7 @@
 #include "Programs/ShinyHunting/PokemonLA_PostMMOSpawnReset.h"
 #include "Programs/ShinyHunting/PokemonLA_ShinyHunt-CustomPath.h"
 
+#include "Programs/TestPrograms/PokemonLA_MapDetectionTest.h"
 #include "Programs/TestPrograms/PokemonLA_MountDetectionTest.h"
 #include "Programs/TestPrograms/PokemonLA_OverworldWatcher.h"
 #include "Programs/TestPrograms/PokemonLA_FlagNavigationTest.h"
@@ -107,6 +108,7 @@ std::vector<PanelEntry> PanelListFactory::make_panels() const{
         ret.emplace_back(make_single_switch_program<GeneratePokemonImageTrainingData_Descriptor, GeneratePokemonImageTrainingData>());
 
         ret.emplace_back("---- Developer Tools ----");
+        ret.emplace_back(make_single_switch_program<MapDetectionTest_Descriptor, MapDetectionTest>());
         ret.emplace_back(make_single_switch_program<MountDetectionTest_Descriptor, MountDetectionTest>());
         ret.emplace_back(make_single_switch_program<OverworldWatcher_Descriptor, OverworldWatcher>());
         ret.emplace_back(make_single_switch_program<SoundListener_Descriptor, SoundListener>());
