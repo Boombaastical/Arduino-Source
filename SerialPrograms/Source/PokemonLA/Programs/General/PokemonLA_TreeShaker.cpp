@@ -207,6 +207,7 @@ using NavStep = std::function<void(SingleSwitchProgramEnvironment&, ProControlle
 static const std::vector<std::vector<NavStep>> TREE_PATHS = {
     // Tree 0: from spawn/save point  ← fill in after hardware test
     {
+        [](auto& env, auto& context){ fast_travel_from_overworld(env, env.console, context, TravelLocations::instance().Fieldlands_Arena)
         [](auto& /*env*/, auto& context){ context.wait_for_all_requests(); },
         [](auto& /*env*/, auto& context){ pbf_wait(context, 500ms); },
         [](auto& /*env*/, auto& context){ pbf_move_right_joystick(context, {-1.0, 0.0}, 400ms, 300ms); },
@@ -222,7 +223,6 @@ static void navigate_to_tree(
     SingleSwitchProgramEnvironment& env, ProControllerContext& context,
     int index
 ){
-    change_mount(env.console, context, MountState::BRAVIARY_ON);
     if (index >= (int)TREE_PATHS.size()){
         env.log("navigate_to_tree: no path defined for tree " + std::to_string(index) + ".");
         return;
