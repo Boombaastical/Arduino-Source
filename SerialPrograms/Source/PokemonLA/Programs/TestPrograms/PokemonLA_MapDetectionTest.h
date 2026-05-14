@@ -59,8 +59,8 @@ private:
     // Detection thresholds — all unlock while running for live tuning
     FloatingPointOption         PIN_RMSD_THRESHOLD;
     FloatingPointOption         PIN_MIN_AREA;
-    FloatingPointOption         DIALOG_FLOOR;
-    FloatingPointOption         DIALOG_RATIO;
+    FloatingPointOption         DIALOG_RMSD_THRESHOLD;
+    FloatingPointOption         DIALOG_MIN_AREA;
     FloatingPointOption         OPEN_RMSD_THRESHOLD;
     SimpleIntegerOption<uint16_t> LOG_INTERVAL_MS;
 

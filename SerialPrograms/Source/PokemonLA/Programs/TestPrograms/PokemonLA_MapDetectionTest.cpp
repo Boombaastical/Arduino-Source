@@ -53,6 +53,24 @@ public:
     }
 };
 
+class TestMapPinDialogMatcher : public ImageMatch::WaterfillTemplateMatcher{
+public:
+    TestMapPinDialogMatcher() : WaterfillTemplateMatcher(
+        "PokemonLA/YellowArrowRight-Template.png",
+        Color(0xff808008), Color(0xffffffff),
+        200
+    ){
+        m_aspect_ratio_lower = 0.9;
+        m_aspect_ratio_upper = 1.1;
+        m_area_ratio_lower   = 0.9;
+        m_area_ratio_upper   = 1.1;
+    }
+    static const TestMapPinDialogMatcher& instance(){
+        static TestMapPinDialogMatcher m;
+        return m;
+    }
+};
+
 }  // anonymous namespace
 
 
@@ -259,18 +277,18 @@ MapDetectionTest::MapDetectionTest()
         LockMode::UNLOCK_WHILE_RUNNING,
         15.0, 1.0, 500.0
     )
-    , DIALOG_FLOOR(
-        "<b>Dialog R/G Floor:</b><br>"
-        "Both R and G averages must exceed this value for the dialog to be detected.",
+    , DIALOG_RMSD_THRESHOLD(
+        "<b>Dialog RMSD Threshold:</b><br>"
+        "Maximum RMSD for a waterfill icon blob to be accepted as a pin-dialog icon.",
         LockMode::UNLOCK_WHILE_RUNNING,
-        70.0, 0.0, 255.0
+        80.0, 0.0, 255.0
     )
-    , DIALOG_RATIO(
-        "<b>Dialog R/B and G/B Ratio:</b><br>"
-        "Both R/B and G/B must exceed this ratio for the dialog to be detected. "
-        "Background: ~1.3×. Dialog with icons: ~4×.",
+    , DIALOG_MIN_AREA(
+        "<b>Dialog Min Area (pre-scale):</b><br>"
+        "Minimum yellow-pixel count for a blob to be considered a dialog icon, "
+        "before scaling by (screen_height / 1080)².",
         LockMode::UNLOCK_WHILE_RUNNING,
-        2.0, 1.0, 10.0
+        100.0, 1.0, 2000.0
     )
     , OPEN_RMSD_THRESHOLD(
         "<b>Map Open RMSD Threshold:</b><br>"
@@ -291,8 +309,8 @@ MapDetectionTest::MapDetectionTest()
     PA_ADD_OPTION(OPEN_BOX);
     PA_ADD_OPTION(PIN_RMSD_THRESHOLD);
     PA_ADD_OPTION(PIN_MIN_AREA);
-    PA_ADD_OPTION(DIALOG_FLOOR);
-    PA_ADD_OPTION(DIALOG_RATIO);
+    PA_ADD_OPTION(DIALOG_RMSD_THRESHOLD);
+    PA_ADD_OPTION(DIALOG_MIN_AREA);
     PA_ADD_OPTION(OPEN_RMSD_THRESHOLD);
     PA_ADD_OPTION(LOG_INTERVAL_MS);
     PA_ADD_OPTION(SAVE_BUTTON);
@@ -342,22 +360,26 @@ void MapDetectionTest::program(SingleSwitchProgramEnvironment& env, ProControlle
             + " | detected=" + (pin_detected ? "YES" : "NO")
         );
 
-        // ── Dialog (ratio) ────────────────────────────────────────────────
-        ImageStats pin_stats = image_stats(extract_box_reference(*snap.frame, pin_box));
-        double r_b = pin_stats.average.b > 0.0 ? pin_stats.average.r / pin_stats.average.b : 999.0;
-        double g_b = pin_stats.average.b > 0.0 ? pin_stats.average.g / pin_stats.average.b : 999.0;
-        bool dialog_detected = pin_stats.average.r > (double)DIALOG_FLOOR
-                            && pin_stats.average.g > (double)DIALOG_FLOOR
-                            && r_b > (double)DIALOG_RATIO
-                            && g_b > (double)DIALOG_RATIO;
+        // ── Dialog (waterfill) ────────────────────────────────────────────
+        ImageViewRGB32 pin_region = extract_box_reference(*snap.frame, pin_box);
+        ImageStats pin_stats = image_stats(pin_region);
+
+        const std::vector<std::pair<uint32_t,uint32_t>> dialog_filters = {
+            {combine_rgb(160, 160, 0), combine_rgb(255, 255, 255)},
+        };
+        const size_t dialog_min_size = std::max<size_t>(1, size_t((double)DIALOG_MIN_AREA * scale * scale));
+        bool dialog_detected = match_template_by_waterfill(
+            snap.frame->size(), pin_region,
+            TestMapPinDialogMatcher::instance(),
+            dialog_filters, {dialog_min_size, SIZE_MAX}, DIALOG_RMSD_THRESHOLD,
+            [](Kernels::Waterfill::WaterfillObject&){ return true; }
+        );
         env.log(
             "[Dialog] R=" + std::to_string(pin_stats.average.r)
             + " G=" + std::to_string(pin_stats.average.g)
             + " B=" + std::to_string(pin_stats.average.b)
-            + " | R/B=" + std::to_string(r_b)
-            + " G/B=" + std::to_string(g_b)
-            + " | floor=" + std::to_string((double)DIALOG_FLOOR)
-            + " ratio=" + std::to_string((double)DIALOG_RATIO)
+            + " | min_area=" + std::to_string(dialog_min_size)
+            + " rmsd_thr=" + std::to_string((double)DIALOG_RMSD_THRESHOLD)
             + " | detected=" + (dialog_detected ? "YES" : "NO")
         );
 

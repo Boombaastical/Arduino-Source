@@ -4,13 +4,13 @@
  *
  */
 
-#include "Kernels/Waterfill/Kernels_Waterfill_Session.h"
-#include "CommonTools/Images/BinaryImage_FilterRgb32.h"
+#include "CommonFramework/VideoPipeline/VideoOverlayScopes.h"
+#include "CommonTools/Images/SolidColorTest.h"
 #include "PokemonLA_OverworldDetector.h"
 
-//#include <iostream>
-//using std::cout;
-//using std::endl;
+#include <iostream>
+using std::cout;
+using std::endl;
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{
@@ -39,54 +39,22 @@ bool OverworldDetector::process_frame(const ImageViewRGB32& frame, WallClock tim
 
 
 bool is_pokemon_selection(VideoOverlay& overlay, const ImageViewRGB32& frame){
-#if 1
-    using namespace Kernels::Waterfill;
+    static const ImageFloatBox box0(0.850000, 0.878000, 0.006000, 0.021000);
+    static const ImageFloatBox box1(0.905000, 0.878000, 0.006000, 0.021000);
 
-    OverlayBoxScope box(overlay, {0.83, 0.95, 0.11, 0.027});
+    OverlayBoxScope scope0(overlay, box0);
+    OverlayBoxScope scope1(overlay, box1);
 
-    std::vector<PackedBinaryMatrix> matrices = compress_rgb32_to_binary_range(
-        extract_box_reference(frame, box),
-        {
-            {0xff008000, 0xff40ffc0},
-        }
-    );
-//    cout << matrices[0].dump() << endl;
+    ImageStats stats0 = image_stats(extract_box_reference(frame, box0));
+    ImageStats stats1 = image_stats(extract_box_reference(frame, box1));
 
-    std::unique_ptr<WaterfillSession> session = make_WaterfillSession();
-    for (PackedBinaryMatrix& matrix : matrices){
-        session->set_source(matrix);
-        auto iter = session->make_iterator(200);
-        WaterfillObject object;
-        while (iter->find_next(object, false)){
-            //  Skip if it touches the boundary.
-//            cout << object.min_x << " , " << object.min_y << endl;
-            if (object.min_x == 0 || object.min_y == 0 ||
-                object.min_x >= matrix.width() - 1 || object.min_y >= matrix.height() - 1
-            ){
-                continue;
-            }
+    cout << "box0: avg=" << stats0.average << " stddev=" << stats0.stddev << endl;
+    cout << "box1: avg=" << stats1.average << " stddev=" << stats1.stddev << endl;
 
-            //  Too short.
-//            cout << object.width() << " x " << object.height() << endl;
-            if (object.width() < object.height() * 10){
-                continue;
-            }
-
-            return true;
-        }
-    }
-
-    return false;
-#else
-    InferenceBoxScope box(overlay, 0.843, 0.96, 0.075, 0.005);
-    ImageStats stats = image_stats(extract_box_reference(frame, box));
-    cout << stats.average << stats.stddev << endl;
-    extract_box_reference(frame, box).save("test.png");
-    if (is_solid(stats, {0.0652401, 0.606812, 0.327948}, 0.15, 70)){
-        return true;
-    }
-    return false;
-#endif
+    // Pokemon menu: semi-transparent overlay, avg sum ~258, stddev ~170 (background shows through).
+    // Items menu: solid yellow/orange overlay, avg sum ~554, stddev ~20.
+    // is_grey checks: min_sum < avg_sum < max_sum AND stddev < max_stddev.
+    return is_grey(stats0, 50, 380, 200) && is_grey(stats1, 50, 380, 200);
 }
 
 
