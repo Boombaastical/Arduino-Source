@@ -19,6 +19,11 @@
 #include "NintendoSwitch/Programs/NintendoSwitch_GameEntry.h"
 #include "Pokemon/Pokemon_Strings.h"
 #include "PokemonLA/Inference/Battles/PokemonLA_BattleMenuDetector.h"
+#include "Kernels/Waterfill/Kernels_Waterfill_Types.h"
+#include "CommonTools/Images/WaterfillUtilities.h"
+#include "CommonTools/ImageMatch/WaterfillTemplateMatcher.h"
+#include "PokemonLA/Inference/Map/PokemonLA_MapDetector.h"
+#include "PokemonLA/Inference/Objects/PokemonLA_FlagTracker.h"
 #include "PokemonLA/Inference/PokemonLA_OverworldDetector.h"
 #include "PokemonLA/PokemonLA_TravelLocations.h"
 #include "PokemonLA/Programs/PokemonLA_GameEntry.h"
@@ -111,6 +116,116 @@ private:
     bool m_detected;
 };
 
+// ── Map pin detection ──────────────────────────────────────────────────────
+
+static const ImageFloatBox MAP_PIN_DIALOG_BOX{0.470, 0.050, 0.100, 0.150};
+static const ImageFloatBox FLAG_PIN_BOX      {0.525, 0.020, 0.030, 0.050};
+
+class PinDialogArrowMatcher : public ImageMatch::WaterfillTemplateMatcher{
+public:
+    PinDialogArrowMatcher()
+        : WaterfillTemplateMatcher(
+            "PokemonLA/YellowArrowRight-Template.png",
+            Color(0xff808008), Color(0xffffffff), 200
+        )
+    {
+        m_aspect_ratio_lower = 0.9;
+        m_aspect_ratio_upper = 1.1;
+        m_area_ratio_lower   = 0.9;
+        m_area_ratio_upper   = 1.1;
+    }
+    static const PinDialogArrowMatcher& instance(){
+        static PinDialogArrowMatcher s;
+        return s;
+    }
+};
+
+class PinDialogDetector : public VisualInferenceCallback{
+public:
+    PinDialogDetector()
+        : VisualInferenceCallback("PinDialogDetector")
+    {}
+    virtual void make_overlays(VideoOverlaySet& /*items*/) const override{}
+    virtual bool process_frame(const ImageViewRGB32& frame, WallClock /*ts*/) override{
+        const double scale  = frame.height() / 1080.0;
+        const size_t min_sz = size_t(200 * scale * scale);
+        const std::vector<std::pair<uint32_t,uint32_t>> filters = {
+            {combine_rgb(160,160,0), combine_rgb(255,255, 80)},
+            {combine_rgb(200,200,0), combine_rgb(255,255,255)},
+            {combine_rgb(200,200,0), combine_rgb(255,255,180)},
+        };
+        return match_template_by_waterfill(
+            frame.size(),
+            extract_box_reference(frame, MAP_PIN_DIALOG_BOX),
+            PinDialogArrowMatcher::instance(),
+            filters,
+            {min_sz, SIZE_MAX},
+            80.0,
+            [](Kernels::Waterfill::WaterfillObject&) -> bool { return true; }
+        );
+    }
+};
+
+class FlagPinMatcher : public ImageMatch::WaterfillTemplateMatcher{
+public:
+    FlagPinMatcher()
+        : WaterfillTemplateMatcher(
+            "PokemonLA/PinAtMapTop.png",
+            Color(0xff808000), Color(0xffffffff), 20
+        )
+    {
+        m_aspect_ratio_lower = 0.4;
+        m_aspect_ratio_upper = 2.5;
+        m_area_ratio_lower   = 0.4;
+        m_area_ratio_upper   = 2.5;
+    }
+    static const FlagPinMatcher& instance(){
+        static FlagPinMatcher s;
+        return s;
+    }
+};
+
+class FlagPinDetector : public VisualInferenceCallback{
+public:
+    FlagPinDetector()
+        : VisualInferenceCallback("FlagPinDetector")
+    {}
+    virtual void make_overlays(VideoOverlaySet& /*items*/) const override{}
+    virtual bool process_frame(const ImageViewRGB32& frame, WallClock /*ts*/) override{
+        const double scale  = frame.height() / 1080.0;
+        const size_t min_sz = std::max<size_t>(1, size_t(5 * scale * scale));
+        const std::vector<std::pair<uint32_t,uint32_t>> filters = {
+            {combine_rgb(65,60,0), combine_rgb(255,255,50)},
+        };
+        return match_template_by_waterfill(
+            frame.size(),
+            extract_box_reference(frame, FLAG_PIN_BOX),
+            FlagPinMatcher::instance(),
+            filters,
+            {min_sz, SIZE_MAX},
+            80.0,
+            [](Kernels::Waterfill::WaterfillObject&) -> bool { return true; }
+        );
+    }
+};
+
+// ── Flag orientation ───────────────────────────────────────────────────────
+
+class FlagDetectedStopper : public VisualInferenceCallback{
+public:
+    explicit FlagDetectedStopper(FlagTracker& tracker)
+        : VisualInferenceCallback("FlagDetectedStopper")
+        , m_tracker(tracker)
+    {}
+    virtual void make_overlays(VideoOverlaySet&) const override{}
+    virtual bool process_frame(const ImageViewRGB32&, WallClock timestamp) override{
+        double d, x, y;
+        return m_tracker.get(d, x, y, timestamp);
+    }
+private:
+    FlagTracker& m_tracker;
+};
+
 }  // anonymous namespace
 
 
@@ -183,6 +298,102 @@ static void ensure_pokemon_menu(SingleSwitchProgramEnvironment& env, ProControll
 }
 
 
+static void set_flagpin_on_map(SingleSwitchProgramEnvironment& env, ProControllerContext& context){
+    while (true){
+        MapDetector       map_open;
+        OverworldDetector overworld(env.console, env.console);
+        context.wait_for_all_requests();
+        pbf_wait(context, 3000ms);
+        int ret = wait_until(env.console, context, std::chrono::seconds(3),
+            {{map_open}, {overworld}});
+        switch (ret){
+        case 0:{
+            bool pin_placed = false;
+            while (!pin_placed){
+                FlagPinDetector   flag_pin;
+                PinDialogDetector pin_dialog;
+                context.wait_for_all_requests();
+                int ret2 = wait_until(env.console, context, std::chrono::seconds(3),
+                    {{flag_pin}, {pin_dialog}});
+                switch (ret2){
+                case 0:
+                    pin_placed = true;
+                    break;
+                case 1:
+                    pbf_press_button(context, BUTTON_A, 500ms, 300ms);
+                    pbf_move_left_joystick(context, {0.0, -1.0}, 2000ms, 300ms);
+                    pbf_wait(context, 1000ms);
+                    break;
+                default:
+                    pbf_move_left_joystick(context, {0.0, +1.0}, 2000ms, 300ms);
+                    pbf_press_button(context, BUTTON_A, 500ms, 300ms);
+                    break;
+                }
+            }
+            pbf_mash_button(context, BUTTON_B, 3000ms);
+            { OverworldDetector ow(env.console, env.console);
+              wait_until(env.console, context, std::chrono::seconds(30), {{ow}}); }
+            return;
+        }
+        case 1:
+            pbf_press_button(context, BUTTON_MINUS, 500ms, 300ms);
+            continue;
+        default:
+            continue;
+        }
+    }
+}
+
+
+static void orient_to_flag(SingleSwitchProgramEnvironment& env, ProControllerContext& context){
+    FlagTracker         flag_tracker(env.console, env.console);
+    FlagDetectedStopper stopper(flag_tracker);
+
+    auto sweep = [&](uint32_t duration_ms, bool use_zl = false){
+        run_until<ProControllerContext>(
+            env.console, context,
+            [duration_ms, use_zl](ProControllerContext& ctx){
+                if (use_zl){ pbf_mash_button(ctx, BUTTON_ZL, 2000ms); }
+                pbf_move_right_joystick(ctx, {+1.0, 0.0}, Milliseconds(duration_ms), 0ms);
+            },
+            {{flag_tracker}, {stopper}}
+        );
+    };
+
+    sweep(3200, true);
+    pbf_wait(context, 500ms);
+    context.wait_for_all_requests();
+    sweep(600);
+
+    for (int attempt = 0; attempt < 8; attempt++){
+        double distance, flag_x, flag_y;
+        if (!flag_tracker.get(distance, flag_x, flag_y)){
+            env.log("orient_to_flag: flag not visible, re-sweeping...");
+            sweep(2000);
+            continue;
+        }
+        env.log("orient_to_flag: flag at x=" + std::to_string(flag_x));
+        double error    = std::abs(flag_x - 0.5);
+        if (error < 0.05){
+            env.log("orient_to_flag: centered.");
+            return;
+        }
+        int64_t corr_ms      = std::max<int64_t>(30, (int64_t)(640.0 * error * 0.6));
+        double  joystick_mag = 1.0 / (1 << attempt);
+        if (flag_x < 0.5){
+            pbf_move_right_joystick(context, {-joystick_mag, 0.0}, Milliseconds(corr_ms), 0ms);
+        }else{
+            pbf_move_right_joystick(context, {+joystick_mag, 0.0}, Milliseconds(corr_ms), 0ms);
+        }
+        context.wait_for_all_requests();
+        pbf_wait(context, 500ms);
+        context.wait_for_all_requests();
+        sweep(600);
+    }
+    env.log("orient_to_flag: could not center after 8 attempts.");
+}
+
+
 // ── Tree navigation paths ──────────────────────────────────────────────────
 //
 // Each entry is a sequence of steps executed in order to reach tree[index]
@@ -207,7 +418,7 @@ using NavStep = std::function<void(SingleSwitchProgramEnvironment&, ProControlle
 static const std::vector<std::vector<NavStep>> TREE_PATHS = {
     // Tree 0: from spawn/save point  ← fill in after hardware test
     {
-        [](auto& env, auto& context){ fast_travel_from_overworld(env, env.console, context, TravelLocations::instance().Fieldlands_Arena)
+        [](auto& env, auto& context){ fast_travel_from_overworld(env, env.console, context, TravelLocations::instance().Fieldlands_Arena); },
         [](auto& /*env*/, auto& context){ context.wait_for_all_requests(); },
         [](auto& /*env*/, auto& context){ pbf_wait(context, 500ms); },
         [](auto& /*env*/, auto& context){ pbf_move_right_joystick(context, {-1.0, 0.0}, 400ms, 300ms); },
@@ -253,6 +464,13 @@ void TreeShaker::program(SingleSwitchProgramEnvironment& env, ProControllerConte
         // ── Save game ──────────────────────────────────────────────────
         env.log("Saving game...");
         save_game_from_overworld(env, env.console, context);
+
+        // ── Place map pin + orient to flag ────────────────────────────
+        env.log("Placing map pin...");
+        set_flagpin_on_map(env, context);
+        env.log("Orienting to flag...");
+        change_mount(env.console, context, MountState::BRAVIARY_ON);
+        orient_to_flag(env, context);
 
         // ── Pass 1: visit every tree and discover its state ─────────────
         env.log("Pass 1: reconnaissance.");
@@ -302,6 +520,13 @@ void TreeShaker::program(SingleSwitchProgramEnvironment& env, ProControllerConte
         // ── Reset to saved game ────────────────────────────────────────
         env.log("Resetting game to saved state...");
         reset_game_from_home(env, env.console, context);
+
+        // ── Place map pin + orient to flag ────────────────────────────
+        env.log("Placing map pin...");
+        set_flagpin_on_map(env, context);
+        env.log("Orienting to flag...");
+        change_mount(env.console, context, MountState::BRAVIARY_ON);
+        orient_to_flag(env, context);
 
         // ── Pass 2: shake only BERRIES trees (no detection needed) ──────
         env.log("Pass 2: shaking BERRIES trees.");
