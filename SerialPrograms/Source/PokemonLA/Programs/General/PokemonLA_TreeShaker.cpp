@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <optional>
 #include "Common/Cpp/Color.h"
 #include "CommonFramework/ImageTools/ImageBoxes.h"
 #include "CommonFramework/ImageTools/ImageStats.h"
@@ -20,6 +21,8 @@
 #include "Pokemon/Pokemon_Strings.h"
 #include "PokemonLA/Inference/Battles/PokemonLA_BattleMenuDetector.h"
 #include "Kernels/Waterfill/Kernels_Waterfill_Types.h"
+#include "Kernels/Waterfill/Kernels_Waterfill_Session.h"
+#include "CommonTools/Images/BinaryImage_FilterRgb32.h"
 #include "CommonTools/Images/WaterfillUtilities.h"
 #include "CommonTools/ImageMatch/WaterfillTemplateMatcher.h"
 #include "PokemonLA/Inference/Map/PokemonLA_MapDetector.h"
@@ -59,7 +62,13 @@ TreeShaker::TreeShaker()
         "How many times to retry throwing at a tree before giving up and treating it as having berries. "
         "Each retry nudges the aim slightly.",
         LockMode::LOCK_WHILE_RUNNING,
-        5, 1, 10
+        6, 1, 10
+    )
+    , START_TREE(
+        "<b>Start from tree number:</b><br>"
+        "Which tree to start from (1 = first tree). Useful for testing a specific tree.",
+        LockMode::LOCK_WHILE_RUNNING,
+        1, 1, 10
     )
     , ITEM_NOTIFICATION_BOX(
         "<b>Item Notification Box:</b><br>"
@@ -74,6 +83,7 @@ TreeShaker::TreeShaker()
     })
 {
     PA_ADD_OPTION(MAX_THROW_ATTEMPTS);
+    PA_ADD_OPTION(START_TREE);
     PA_ADD_OPTION(ITEM_NOTIFICATION_BOX);
     PA_ADD_OPTION(NOTIFICATIONS);
 }
@@ -89,86 +99,232 @@ namespace{
 // ── Berry drop detection ───────────────────────────────────────────────────
 
 static const ImageFloatBox BERRY_XMARK_BOX{0.935, 0.605, 0.017, 0.028};
-static const ImageFloatBox BERRY_DARK_BOX {0.800, 0.576, 0.040, 0.031};
-static const ImageFloatBox BERRY_LEVEL_BOX{0.060, 0.365, 0.022, 0.030};
-
-class BerriesXMarkMatcher : public ImageMatch::WaterfillTemplateMatcher{
-public:
-    BerriesXMarkMatcher() : WaterfillTemplateMatcher(
-        "PokemonLA/BerriesXMark.png",
-        Color(0xffc8c8c8), Color(0xffffffff), 10
-    ){
-        m_aspect_ratio_lower = 0.5;
-        m_aspect_ratio_upper = 2.0;
-        m_area_ratio_lower   = 0.5;
-        m_area_ratio_upper   = 2.0;
-    }
-    static const BerriesXMarkMatcher& instance(){
-        static BerriesXMarkMatcher m; return m;
-    }
+static const ImageFloatBox BERRY_TEXT_BOX {0.867, 0.576, 0.055, 0.031};
+static const ImageFloatBox BERRY_LEVEL_BOXES[6] = {
+    {0.055000, 0.210000, 0.028000, 0.048000},
+    {0.055000, 0.286000, 0.028000, 0.048000},
+    {0.055000, 0.360000, 0.028000, 0.048000},
+    {0.055000, 0.434000, 0.028000, 0.048000},
+    {0.055000, 0.507000, 0.028000, 0.048000},
+    {0.055000, 0.580000, 0.028000, 0.048000},
 };
 
-class PokemonLevelUpMatcher : public ImageMatch::WaterfillTemplateMatcher{
-public:
-    PokemonLevelUpMatcher() : WaterfillTemplateMatcher(
-        "PokemonLA/PokemonLevelUp.png",
-        Color(0xffc8c8c8), Color(0xffffffff), 10
-    ){
-        m_aspect_ratio_lower = 0.5;
-        m_aspect_ratio_upper = 2.0;
-        m_area_ratio_lower   = 0.5;
-        m_area_ratio_upper   = 2.0;
-    }
-    static const PokemonLevelUpMatcher& instance(){
-        static PokemonLevelUpMatcher m; return m;
-    }
-};
 
 class BerryDropDetector : public VisualInferenceCallback{
 public:
-    BerryDropDetector(VideoOverlay& overlay)
+    BerryDropDetector(Logger& logger, VideoOverlay& overlay)
         : VisualInferenceCallback("BerryDropDetector")
-        , m_ov_xmark(overlay, BERRY_XMARK_BOX, COLOR_YELLOW)
-        , m_ov_dark (overlay, BERRY_DARK_BOX,  COLOR_CYAN)
-        , m_ov_level(overlay, BERRY_LEVEL_BOX, COLOR_MAGENTA)
-    {}
+        , m_logger(logger)
+        , m_overlay(overlay)
+        , m_last_log(WallClock::min())
+        , m_notification_seen(false)
+        , m_phase1_started(false)
+        , m_phase2_started(false)
+    {
+        m_logger.log("BerryDropDetector: initialized (v3 - 6 level boxes)");
+        for (size_t i = 0; i < 6; i++){
+            m_ov_level[i].emplace(m_overlay, BERRY_LEVEL_BOXES[i], COLOR_RED);
+        }
+    }
     virtual void make_overlays(VideoOverlaySet&) const override{}
-    virtual bool process_frame(const ImageViewRGB32& frame, WallClock) override{
+    virtual bool process_frame(const ImageViewRGB32& frame, WallClock now) override{
         const double scale = frame.height() / 1080.0;
         const size_t min_sz = std::max<size_t>(1, size_t(10 * scale * scale));
         const std::vector<std::pair<uint32_t,uint32_t>> white_filter = {
             {combine_rgb(200, 200, 200), combine_rgb(255, 255, 255)},
         };
 
-        // Condition 1: white X mark
-        bool xmark = match_template_by_waterfill(
-            frame.size(),
-            extract_box_reference(frame, BERRY_XMARK_BOX),
-            BerriesXMarkMatcher::instance(),
-            white_filter, {min_sz, SIZE_MAX}, 80.0,
-            [](Kernels::Waterfill::WaterfillObject&){ return true; }
-        );
-        if (!xmark) return false;
+        // Phase 1: latch when both the X-mark and white item text are detected.
+        if (!m_notification_seen){
+            if (!m_phase1_started){
+                m_phase1_started = true;
+                m_logger.log("BerryDropDetector [phase1]: started");
+            }
+            // Blob-existence check: any white blob in the xmark box means the X is present.
+            PackedBinaryMatrix xmark_matrix = compress_rgb32_to_binary_multirange(
+                extract_box_reference(frame, BERRY_XMARK_BOX), white_filter
+            );
+            auto xmark_session = Kernels::Waterfill::make_WaterfillSession(xmark_matrix);
+            auto xmark_finder  = xmark_session->make_iterator(min_sz);
+            Kernels::Waterfill::WaterfillObject xmark_obj;
+            bool xmark = xmark_finder->find_next(xmark_obj, false);
 
-        // Condition 2: dark overlay
-        ImageStats dark_stats = image_stats(extract_box_reference(frame, BERRY_DARK_BOX));
-        double brightness = (dark_stats.average.r + dark_stats.average.g + dark_stats.average.b) / 3.0;
-        if (brightness >= 80.0) return false;
+            // Blob-existence check: any white blob in the item text area means text is present.
+            PackedBinaryMatrix text_matrix = compress_rgb32_to_binary_multirange(
+                extract_box_reference(frame, BERRY_TEXT_BOX), white_filter
+            );
+            auto text_session = Kernels::Waterfill::make_WaterfillSession(text_matrix);
+            auto text_finder  = text_session->make_iterator(min_sz);
+            Kernels::Waterfill::WaterfillObject text_obj;
+            bool text = text_finder->find_next(text_obj, false);
 
-        // Condition 3: "Lv." text
-        return match_template_by_waterfill(
-            frame.size(),
-            extract_box_reference(frame, BERRY_LEVEL_BOX),
-            PokemonLevelUpMatcher::instance(),
-            white_filter, {min_sz, SIZE_MAX}, 80.0,
-            [](Kernels::Waterfill::WaterfillObject&){ return true; }
-        );
+            if (xmark && !m_ov_xmark) m_ov_xmark.emplace(m_overlay, BERRY_XMARK_BOX, COLOR_YELLOW);
+            else if (!xmark)          m_ov_xmark.reset();
+            if (text && !m_ov_text)   m_ov_text.emplace(m_overlay, BERRY_TEXT_BOX, COLOR_GREEN);
+            else if (!text)           m_ov_text.reset();
+
+            if (now - m_last_log >= std::chrono::seconds(1)){
+                m_logger.log(
+                    "BerryDropDetector [phase1]: xmark=" + std::to_string(xmark) +
+                    " text=" + std::to_string(text)
+                );
+                m_last_log = now;
+            }
+
+            if (xmark && text){
+                m_notification_seen = true;
+                m_logger.log("BerryDropDetector: notification latched, now watching for Lv.");
+            }
+            return false;
+        }
+
+        // Phase 2: check all 6 possible Lv. positions; succeed if any matches.
+        // Filter tuned to the observed text color: ~RGB(88–96, 88–96, 77–86).
+        const std::vector<std::pair<uint32_t,uint32_t>> level_filter = {
+            {combine_rgb(70, 70, 60), combine_rgb(110, 110, 100)},
+        };
+
+        if (!m_phase2_started){
+            m_phase2_started = true;
+            m_logger.log("BerryDropDetector [phase2]: started");
+        }
+
+        // Pass 1: blob counting + color sampling (no template, no throw risk).
+        size_t total_blobs    = 0;
+        size_t total_max_area = 0;
+        std::string color_results;
+        size_t blob_per_box[6] = {};
+        for (size_t i = 0; i < 6; i++){
+            ImageStats stats = image_stats(extract_box_reference(frame, BERRY_LEVEL_BOXES[i]));
+            color_results += "(" + std::to_string((uint8_t)stats.average.r) + "," +
+                             std::to_string((uint8_t)stats.average.g) + "," +
+                             std::to_string((uint8_t)stats.average.b) + ") ";
+
+            PackedBinaryMatrix level_matrix = compress_rgb32_to_binary_multirange(
+                extract_box_reference(frame, BERRY_LEVEL_BOXES[i]), level_filter
+            );
+            auto level_session = Kernels::Waterfill::make_WaterfillSession(level_matrix);
+            auto level_finder  = level_session->make_iterator(min_sz);
+            Kernels::Waterfill::WaterfillObject level_obj;
+            size_t blobs = 0, max_area = 0;
+            while (level_finder->find_next(level_obj, false)){
+                blobs++;
+                max_area = std::max(max_area, level_obj.area);
+            }
+            blob_per_box[i]  = blobs;
+            total_blobs     += blobs;
+            total_max_area   = std::max(total_max_area, max_area);
+        }
+
+        if (now - m_last_log >= std::chrono::seconds(1)){
+            std::string blob_results;
+            for (size_t i = 0; i < 6; i++) blob_results += std::to_string(blob_per_box[i]) + " ";
+            m_logger.log(
+                "BerryDropDetector [phase2 blobs]: total=" + std::to_string(total_blobs) +
+                " max_area=" + std::to_string(total_max_area) +
+                " per_box=[" + blob_results + "]" +
+                " avg_rgb=[" + color_results + "]"
+            );
+            m_last_log = now;
+        }
+
+        // Any blob in any level box = "Lv." text detected.
+        bool any_level = false;
+        for (size_t i = 0; i < 6; i++){
+            bool level_i = blob_per_box[i] > 0;
+            m_ov_level[i]->color = level_i ? COLOR_GREEN : COLOR_RED;
+            if (level_i) any_level = true;
+        }
+
+        return any_level;
     }
 private:
-    OverlayBoxScope m_ov_xmark;
-    OverlayBoxScope m_ov_dark;
-    OverlayBoxScope m_ov_level;
+    Logger& m_logger;
+    VideoOverlay& m_overlay;
+    WallClock m_last_log;
+    bool m_notification_seen;
+    bool m_phase1_started;
+    bool m_phase2_started;
+    std::optional<OverlayBoxScope> m_ov_xmark;
+    std::optional<OverlayBoxScope> m_ov_text;
+    std::optional<OverlayBoxScope> m_ov_level[6];
 };
+
+// ── HP bar detection (Pokemon in targeting mode) ───────────────────────────
+
+static const ImageFloatBox HP_BAR_BOX{0.838000, 0.957000, 0.085000, 0.009000};
+
+// Returns true when the green HP bar is visible (pokemon is in hand, not thrown).
+static bool is_hp_bar_visible(const ImageViewRGB32& frame){
+    const double scale = frame.height() / 1080.0;
+    const size_t min_sz = std::max<size_t>(1, size_t(50 * scale * scale));
+    // HP bar green in 0-255: R≈46-67, G≈201-215, B≈125-132
+    // Tight range excludes PLA grass (yellow-green: high R, G<180).
+    PackedBinaryMatrix matrix = compress_rgb32_to_binary_range(
+        extract_box_reference(frame, HP_BAR_BOX),
+        combine_rgb(35, 185, 110),
+        combine_rgb(80, 225, 145)
+    );
+    auto session = Kernels::Waterfill::make_WaterfillSession(matrix);
+    auto finder  = session->make_iterator(min_sz);
+    Kernels::Waterfill::WaterfillObject obj;
+    return finder->find_next(obj, false);
+}
+
+// Watches the HP bar after a throw. The bar disappears when the pokemon is in
+// flight; if it stays gone for 3 s the pokemon missed, so ZR is pressed to
+// recall it. Returns true (stopping wait_until) when the recall is sent.
+// Fight/berry detectors remain fully independent and take priority.
+class HpBarManager : public VisualInferenceCallback{
+public:
+    HpBarManager(Logger& logger, VideoOverlay& overlay, ProControllerContext& context)
+        : VisualInferenceCallback("HpBarManager")
+        , m_logger(logger)
+        , m_ov(overlay, HP_BAR_BOX, COLOR_CYAN)
+        , m_context(context)
+        , m_phase(Phase::WAITING_FOR_DISAPPEAR)
+        , m_gone_since(WallClock::min())
+    {}
+    virtual void make_overlays(VideoOverlaySet&) const override{}
+    virtual bool process_frame(const ImageViewRGB32& frame, WallClock now) override{
+        bool visible = is_hp_bar_visible(frame);
+        switch (m_phase){
+        case Phase::WAITING_FOR_DISAPPEAR:
+            if (!visible){
+                m_phase = Phase::BAR_GONE;
+                m_gone_since = now;
+                m_logger.log("HpBarManager: bar disappeared, throw confirmed.");
+            }
+            return false;
+        case Phase::BAR_GONE:
+            if (visible){
+                // Pokemon returned without triggering fight or berries — counts as an
+                // attempt regardless of how quickly the ball bounced back.
+                m_logger.log("HpBarManager: bar reappeared with no result, retrying.");
+                return true;
+            }
+            if (now - m_gone_since >= 2000ms){
+                m_logger.log("HpBarManager: 2s elapsed, recalling pokemon.");
+                pbf_press_button(m_context, BUTTON_ZR, 160ms, 0ms);
+                m_context.wait_for_all_requests();
+                m_phase = Phase::RECALLED;
+                return true;
+            }
+            return false;
+        case Phase::RECALLED:
+            return true;
+        }
+        return false;
+    }
+private:
+    enum class Phase{ WAITING_FOR_DISAPPEAR, BAR_GONE, RECALLED };
+    Logger&               m_logger;
+    OverlayBoxScope       m_ov;
+    ProControllerContext& m_context;
+    Phase                 m_phase;
+    WallClock             m_gone_since;
+};
+
 
 // ── Map pin detection ──────────────────────────────────────────────────────
 
@@ -309,30 +465,35 @@ private:
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+// Alternates left/right aim nudges with increasing magnitude on retries.
+static void adjust_aim(SingleSwitchProgramEnvironment& env, ProControllerContext& context, int attempt){
+    double shift = (attempt % 2 == 0) ? -1 : +1;
+    auto time_increase = std::chrono::milliseconds(150 * attempt + 200);
+    env.log("adjust_aim: shift=" + std::to_string(shift));
+    pbf_move_right_joystick(context, {shift, 0.0}, time_increase, 100ms);
+    context.wait_for_all_requests();
+}
+
+
 static TreeOutcome throw_at_tree(
     SingleSwitchProgramEnvironment& env, ProControllerContext& context,
     int attempt
 ){
-    // Per-attempt camera nudge via right joystick (attempt 0 = first throw, no nudge).
-    switch (attempt){
-    case 0: break;
-    case 1: /* pbf_move_right_joystick(context, {+0.5, 0.0}, 200ms, 0ms); */ break;
-    case 2: /* pbf_move_right_joystick(context, {-0.5, 0.0}, 200ms, 0ms); */ break;
-    case 3: /* pbf_move_right_joystick(context, {+1.0, 0.0}, 200ms, 0ms); */ break;
-    case 4: /* pbf_move_right_joystick(context, {-1.0, 0.0}, 200ms, 0ms); */ break;
-    default: break;
-    }
+    context.wait_for_all_requests();
+    pbf_wait(context, 1000ms);
+    if (attempt > 0) adjust_aim(env, context, attempt);
 
-    pbf_press_button(context, BUTTON_ZR, 500ms, 160ms);
-    pbf_wait(context, 4500ms);
+    pbf_press_button(context, BUTTON_ZR, 500ms, 0ms);
     context.wait_for_all_requests();
 
     BattleMenuDetector battle_detector(env.console, env.console, true);
-    BerryDropDetector  berry_detector(env.console.overlay());
+    BerryDropDetector  berry_detector(env.console, env.console.overlay());
+    HpBarManager       hp_bar_manager(env.console, env.console.overlay(), context);
 
+    // 30 s outer ceiling; HpBarManager fires ZR recall after 3 s of bar absence.
     int triggered = wait_until(
-        env.console, context, 3000ms,
-        {{battle_detector}, {berry_detector}}
+        env.console, context, 30000ms,
+        {{battle_detector}, {berry_detector}, {hp_bar_manager}}
     );
 
     if (triggered == 0){
@@ -343,7 +504,7 @@ static TreeOutcome throw_at_tree(
         env.log("throw_at_tree: BERRIES detected.");
         return TreeOutcome::BERRIES;
     }
-    env.log("throw_at_tree: NOTHING detected.");
+    env.log("throw_at_tree: NOTHING detected, pokemon recalled.");
     return TreeOutcome::NOTHING;
 }
 
@@ -352,17 +513,6 @@ static void exit_battle(SingleSwitchProgramEnvironment& env, ProControllerContex
     env.log("exit_battle: running away.");
     pbf_press_button(context, BUTTON_B, 160ms, 1800ms);
     pbf_press_button(context, BUTTON_A, 160ms, 4300ms);
-    context.wait_for_all_requests();
-}
-
-
-// Alternates left/right aim nudges with increasing magnitude on retries.
-static void adjust_aim(SingleSwitchProgramEnvironment& env, ProControllerContext& context, int attempt){
-    double magnitude = 0.1 * (attempt / 2 + 1);
-    double shift = (attempt % 2 == 0) ? -magnitude : +magnitude;
-    shift = std::max(-1.0, std::min(1.0, shift));
-    env.log("adjust_aim: shift=" + std::to_string(shift));
-    pbf_move_left_joystick(context, {shift, 0.0}, 100ms, 100ms);
     context.wait_for_all_requests();
 }
 
@@ -459,12 +609,14 @@ static void orient_to_flag(SingleSwitchProgramEnvironment& env, ProControllerCon
 
     // Mirror find_flag from FlagNavigationAir: ZL to level camera, then Z-pattern sweep
     // (horizontal + vertical zig-zags). Try right first, then left if not found.
+    pbf_mash_button(context, BUTTON_ZL, 1700ms);
+
     bool found = false;
     for (double dir : {+1.0, -1.0}){
         int ret = run_until<ProControllerContext>(
             env.console, context,
             [dir](ProControllerContext& ctx){
-                pbf_mash_button(ctx, BUTTON_ZL, 2000ms);
+                pbf_mash_button(ctx, BUTTON_ZL, 300ms);
                 pbf_move_right_joystick(ctx, {dir,  0.0}, 3200ms, 0ms);
                 pbf_move_right_joystick(ctx, {0.0, -1.0},  960ms, 0ms);
                 pbf_move_right_joystick(ctx, {dir,  0.0}, 3200ms, 0ms);
@@ -482,8 +634,8 @@ static void orient_to_flag(SingleSwitchProgramEnvironment& env, ProControllerCon
         return;
     }
 
-    // Centering: nudges at 0.25 magnitude; 500ms when far (>5%), 250ms when close.
-    for (int step = 0; step < 20; step++){
+    // Centering: nudges at 0.5 magnitude; 500ms when far (>5%), 250ms when close.
+    for (int step = 0; step < 100; step++){
         double distance, flag_x, flag_y;
         if (!flag_tracker.get(distance, flag_x, flag_y)){
             env.log("orient_to_flag: flag lost at centering step " + std::to_string(step));
@@ -492,17 +644,21 @@ static void orient_to_flag(SingleSwitchProgramEnvironment& env, ProControllerCon
         env.log("orient_to_flag: centering step " + std::to_string(step) + " flag_x=" + std::to_string(flag_x));
         if (std::abs(flag_x - 0.5) < 0.02){
             env.log("orient_to_flag: centered.");
+            context.wait_for_all_requests();
+            pbf_wait(context, 1000ms);
             return;
         }
 
-        double dir = (flag_x > 0.5) ? +0.25 : -0.25;
-        auto nudge = (std::abs(flag_x - 0.5) > 0.05)
+        double dir = (flag_x > 0.5) ? +0.5 : -0.5;
+        double dir_corr = 0;
+        auto nudge = (std::abs(flag_x - 0.5) > 0.15)
             ? std::chrono::milliseconds(500)
             : std::chrono::milliseconds(250);
+        dir_corr = (std::abs(flag_x - 0.5) > 0.15) ? dir : dir * 0.5;
         run_until<ProControllerContext>(
             env.console, context,
-            [dir, nudge](ProControllerContext& ctx){
-                pbf_move_right_joystick(ctx, {dir, 0.0}, nudge, 0ms);
+            [dir_corr, nudge](ProControllerContext& ctx){
+                pbf_move_right_joystick(ctx, {dir_corr, 0.0}, nudge, 100ms);
             },
             {{flag_tracker}}
         );
@@ -517,8 +673,8 @@ static void slow_landing(ConsoleHandle& console, ProControllerContext& context, 
         change_mount(console, context, MountState::BRAVIARY_OFF);
         pbf_wait(context, 250ms);
         change_mount(console, context, MountState::BRAVIARY_ON);
-        pbf_wait(context, 250ms);
     }
+    change_mount(console, context, MountState::BRAVIARY_OFF);
     context.wait_for_all_requests();
     pbf_wait(context, 1000ms);
     context.wait_for_all_requests();
@@ -543,7 +699,7 @@ static void slow_landing(ConsoleHandle& console, ProControllerContext& context, 
 using NavStep = std::function<void(SingleSwitchProgramEnvironment&, ProControllerContext&)>;
 
 static const std::vector<NavStep> TREE_PATHS = {
-    // Tree 0: from spawn/save point  ← fill in after hardware test
+    // Tree 1: from spawn/save point  ← fill in after hardware test
     [](auto& env, auto& context){
         fast_travel_from_overworld(env, env.console, context, TravelLocations::instance().Fieldlands_Arena);
         context.wait_for_all_requests();
@@ -562,6 +718,7 @@ static const std::vector<NavStep> TREE_PATHS = {
         pbf_move_left_joystick(context, {0.0, +1.0}, 1000ms, 300ms);
         pbf_press_button(context, BUTTON_B, 6500ms, 160ms);
         change_mount(env.console, context, MountState::BRAVIARY_OFF);
+        pbf_wait(context, 1000ms);
         context.wait_for_all_requests();
 
         change_mount(env.console, context, MountState::BRAVIARY_ON);
@@ -572,14 +729,51 @@ static const std::vector<NavStep> TREE_PATHS = {
         context.wait_for_all_requests();
 
         change_mount(env.console, context, MountState::BRAVIARY_ON);
-        pbf_move_right_joystick(context, {-0.5, 0.0}, 550ms, 300ms);
+        pbf_move_right_joystick(context, {-0.5, 0.0}, 575ms, 300ms);
         pbf_move_left_joystick(context, {0.0, +1.0}, 1000ms, 300ms);
         pbf_press_button(context, BUTTON_B, 4000ms, 160ms);
         change_mount(env.console, context, MountState::BRAVIARY_OFF);
+        pbf_move_right_joystick(context, {0.0, -0.5}, 400ms, 300ms);
         context.wait_for_all_requests();
     },
-    // Tree 1: from tree 0            ← fill in after hardware test
-    [](auto& /*env*/, auto& /*context*/){
+    // Tree 2: from tree 0            ← fill in after hardware test
+    [](auto& env, auto& context){
+        context.wait_for_all_requests();
+        pbf_wait(context, 500ms);
+        change_mount(env.console, context, MountState::BRAVIARY_ON);
+        orient_to_flag(env, context);
+        context.wait_for_all_requests();
+        pbf_move_right_joystick(context, {-0.5, 0.0}, 1000ms, 300ms);
+        pbf_move_left_joystick(context, {0.0, +1.0}, 1000ms, 300ms);
+        pbf_press_button(context, BUTTON_B, 4100ms, 300ms);
+        slow_landing(env.console, context, 1);
+        context.wait_for_all_requests();
+    },
+    // Tree 3
+    [](auto& env, auto& context){
+        context.wait_for_all_requests();
+        pbf_wait(context, 500ms);
+        change_mount(env.console, context, MountState::BRAVIARY_ON);
+        orient_to_flag(env, context);
+        context.wait_for_all_requests();
+        pbf_move_right_joystick(context, {+0.5, 0.0}, 1400ms, 300ms);
+        pbf_move_left_joystick(context, {0.0, +1.0}, 1000ms, 300ms);
+        pbf_press_button(context, BUTTON_B, 5300ms, 300ms);
+        slow_landing(env.console, context, 3);
+        pbf_move_right_joystick(context, {0.0, -0.5}, 400ms, 300ms);
+        context.wait_for_all_requests();
+    },
+    // Tree 4
+    [](auto& env, auto& context){
+        fast_travel_from_overworld(env, env.console, context, TravelLocations::instance().Fieldlands_Heights);
+        context.wait_for_all_requests();
+        pbf_wait(context, 500ms);
+        change_mount(env.console, context, MountState::BRAVIARY_ON);
+        pbf_move_right_joystick(context, {-0.5, 0.0}, 1700ms, 300ms);
+        pbf_move_left_joystick(context, {0.0, +1.0}, 900ms, 300ms);
+        pbf_press_button(context, BUTTON_B, 5100ms, 300ms);
+        slow_landing(env.console, context, 1);
+        pbf_move_right_joystick(context, {0.0, -0.5}, 500ms, 300ms);
     },
 };
 
@@ -602,6 +796,7 @@ static void navigate_to_tree(
 void TreeShaker::program(SingleSwitchProgramEnvironment& env, ProControllerContext& context){
     const int num_trees    = (int)TREE_PATHS.size();
     const int max_attempts = MAX_THROW_ATTEMPTS;
+    const int start_tree   = std::max(0, (int)START_TREE - 1);
 
     std::vector<TreeState> tree_states((size_t)num_trees, TreeState::UNKNOWN);
 
@@ -624,9 +819,9 @@ void TreeShaker::program(SingleSwitchProgramEnvironment& env, ProControllerConte
         set_flagpin_on_map(env, context);
 
         // ── Pass 1: visit every tree and discover its state ─────────────
-        env.log("Pass 1: reconnaissance.");
+        env.log("Pass 1: reconnaissance (starting from tree " + std::to_string(start_tree + 1) + ").");
         ensure_pokemon_menu(env, context);
-        for (int i = 0; i < num_trees; i++){
+        for (int i = start_tree; i < num_trees; i++){
             env.log("Tree " + std::to_string(i + 1) + "/" + std::to_string(num_trees) + ": approaching.");
             navigate_to_tree(env, context, i);
 

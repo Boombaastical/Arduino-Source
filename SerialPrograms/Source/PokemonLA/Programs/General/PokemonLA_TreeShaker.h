@@ -31,6 +31,7 @@ public:
 
 private:
     SimpleIntegerOption<uint16_t> MAX_THROW_ATTEMPTS;
+    SimpleIntegerOption<uint16_t> START_TREE;
     BoxFloatOption ITEM_NOTIFICATION_BOX;
 
     EventNotificationsOption NOTIFICATIONS;
